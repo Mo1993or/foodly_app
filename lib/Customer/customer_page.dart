@@ -1,3 +1,4 @@
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:foodly/Auth/login_screen.dart';
 import 'package:foodly/Customer/checkout_page.dart';
@@ -9,6 +10,10 @@ import 'package:foodly/Customer/panier_page.dart';
 import 'package:foodly/Customer/profile_page.dart';
 import 'package:foodly/Onboarding/role_page.dart';
 import 'package:foodly/main.dart';
+import 'package:foodly/model/dishes_model.dart';
+import 'package:foodly/model/restaurant_model.dart';
+import 'package:foodly/service/restaurant_service.dart';
+import 'package:foodly/widget/shimers.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -24,86 +29,90 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   int _selectedTab = 0;
   final Set<String> _cart = {};
 
-  final List<String> _categories = [
-    'Tout',
-    'Sénégalais',
-    'Fast-food',
-    'Pizza',
-    'Poulet',
-    'Desserts',
-  ];
+  List<dynamic> categories = [];
 
-  final List<Map<String, dynamic>> _restaurants = [
-    {
-      'name': 'Le Bon Goût',
-      'cuisine': 'Cuisine sénégalaise',
-      'rating': '4.8',
-      'time': '20-30 min',
-      'category': 'Sénégalais',
-      'color': const Color(0xFFB95D2B),
-      'image':
-          'https://images.unsplash.com/photo-1547592180-85f173990554?w=700',
-    },
-    {
-      'name': 'Burger House',
-      'cuisine': 'Burgers • Fast-food',
-      'rating': '4.7',
-      'time': '15-25 min',
-      'category': 'Fast-food',
-      'color': const Color(0xFF9C5636),
-      'image':
-          'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=700',
-    },
-    {
-      'name': 'Pizza Palace',
-      'cuisine': 'Pizza • Italienne',
-      'rating': '4.6',
-      'time': '25-35 min',
-      'category': 'Pizza',
-      'color': const Color(0xFFC17D32),
-      'image':
-          'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=700',
-    },
-  ];
+  List<RestaurantModel> restaurants = [];
 
-  final List<Map<String, dynamic>> _dishes = [
-    {
-      'name': 'Poulet braisé',
-      'restaurant': 'Le Bon Goût',
-      'price': '4 500 FCFA',
-      'image':
-          'https://images.unsplash.com/photo-1532550907401-a500c9a57435?w=500',
-    },
-    {
-      'name': 'Burger classique',
-      'restaurant': 'Burger House',
-      'price': '3 500 FCFA',
-      'image':
-          'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500',
-    },
-    {
-      'name': 'Pizza Margherita',
-      'restaurant': 'Pizza Palace',
-      'price': '5 000 FCFA',
-      'image':
-          'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=500',
-    },
-  ];
-
-  List<Map<String, dynamic>> get _filteredRestaurants {
+  List<RestaurantModel> get _filteredRestaurants {
     final query = _searchController.text.trim().toLowerCase();
 
-    return _restaurants.where((restaurant) {
+    return restaurants.where((restaurant) {
       final matchesSearch =
-          restaurant['name'].toString().toLowerCase().contains(query) ||
-          restaurant['cuisine'].toString().toLowerCase().contains(query);
+          restaurant.name.toString().toLowerCase().contains(query) ||
+          restaurant.restaurantType.toString().toLowerCase().contains(query);
 
       final matchesCategory =
           _selectedCategory == 0 ||
-          restaurant['category'] == _categories[_selectedCategory];
+          restaurant.restaurantType == categories[_selectedCategory];
 
       return matchesSearch && matchesCategory;
     }).toList();
+  }
+
+  bool isLoading = true;
+  _fetchRestaurant() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      await RestaurantService().fetchRestaurants().then(
+        (value) => {
+          setState(() {
+            restaurants = value;
+
+            isLoading = false;
+          }),
+        },
+      );
+    } catch (error) {
+      setState(() {
+        isLoading = false;
+      });
+      print("err $error");
+    }
+  }
+
+  List<dynamic> restaurantTypes = [];
+  _fetchTypesList() async {
+    try {
+      await RestaurantService().fetchTypesRestaurants().then(
+        (value) => {
+          setState(() {
+            categories = value;
+          }),
+        },
+      );
+    } catch (error) {
+      print("eeror");
+    }
+  }
+
+  List<DishesModel> dishes = [];
+
+  _fetchDishes() async {
+    print("access");
+    try {
+      await RestaurantService()
+          .fetchDishes(idRestaurants: "")
+          .then(
+            (value) => {
+              setState(() {
+                dishes = value;
+              }),
+            },
+          );
+    } catch (err) {
+      print("error $err");
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _fetchRestaurant();
+    _fetchTypesList();
+    _fetchDishes();
   }
 
   @override
@@ -120,7 +129,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         child: IndexedStack(
           index: _selectedTab,
           children: [
-            _buildHome(),
+            (isLoading) ? const RestaurantShimmer(itemCount: 3) : _buildHome(),
             ExploreScreen(),
             MyOrdersScreen(),
             ProfilePage(
@@ -216,7 +225,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
-                child: _restaurantCard(restaurants[index], _dishes[index]),
+                child: _restaurantCard(restaurants[index]),
               );
             }, childCount: _filteredRestaurants.length.clamp(0, 3)),
           ),
@@ -238,10 +247,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               height: 225,
               child: ListView.separated(
                 scrollDirection: Axis.horizontal,
-                itemCount: _dishes.length,
+                itemCount: dishes.length,
                 separatorBuilder: (_, __) => const SizedBox(width: 14),
                 itemBuilder: (context, index) =>
-                    _dishCard(_dishes[index], _restaurants[index]),
+                    _dishCard(dishes[index], dishes[index].restaurant),
               ),
             ),
           ),
@@ -314,7 +323,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 onCheckout: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => const CheckoutScreen()),
+                    MaterialPageRoute(builder: (_) => CheckoutScreen()),
                   );
                 },
               ),
@@ -447,7 +456,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       Icons.lunch_dining_rounded,
       Icons.local_pizza_rounded,
       Icons.set_meal_rounded,
+      Icons.set_meal_rounded,
+      Icons.set_meal_rounded,
+      Icons.set_meal_rounded,
+      Icons.local_pizza_rounded,
+      Icons.lunch_dining_rounded,
+      Icons.local_pizza_rounded,
+      Icons.set_meal_rounded,
       Icons.icecream_rounded,
+      Icons.set_meal_rounded,
+      Icons.icecream_rounded,
+      Icons.grid_view_rounded,
     ];
 
     return Column(
@@ -459,7 +478,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           height: 96,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
-            itemCount: _categories.length,
+            itemCount: categories.length,
             separatorBuilder: (_, __) => const SizedBox(width: 14),
             itemBuilder: (context, index) {
               final selected = _selectedCategory == index;
@@ -493,7 +512,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        _categories[index],
+                        categories[index],
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
@@ -515,18 +534,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
-  Widget _restaurantCard(
-    Map<String, dynamic> restaurant,
-    Map<String, dynamic> dish,
-  ) {
+  Widget _restaurantCard(RestaurantModel restaurant) {
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(22),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () {
-          final restaurantDishes = _dishes.where((dish) {
-            return dish['restaurant'] == restaurant['name'];
+          final restaurantDishes = dishes.where((dish) {
+            return dish.restaurant?.name == restaurant.name;
           }).toList();
 
           Navigator.push(
@@ -549,10 +565,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 fit: StackFit.expand,
                 children: [
                   Image.network(
-                    restaurant['image'],
+                    restaurant.coverPhotoUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => ColoredBox(
-                      color: restaurant['color'],
+                      color: restaurant.colors[0].toColor,
                       child: const Icon(
                         Icons.restaurant_rounded,
                         color: Colors.white,
@@ -607,7 +623,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          restaurant['name'],
+                          restaurant.name,
                           style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
@@ -622,40 +638,67 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        restaurant['rating'],
+                        restaurant.reviewNote,
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ],
                   ),
                   const SizedBox(height: 7),
                   Text(
-                    restaurant['cuisine'],
+                    restaurant.restaurantType,
                     style: const TextStyle(
                       color: Color(0xFF777777),
                       fontSize: 13,
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.access_time_rounded,
-                        color: FoodlyApp.orange,
-                        size: 17,
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        restaurant['time'],
-                        style: const TextStyle(fontSize: 12),
-                      ),
-                      const Spacer(),
-                      const Icon(
-                        Icons.arrow_forward_rounded,
-                        color: FoodlyApp.orange,
-                        size: 19,
-                      ),
-                    ],
-                  ),
+                  (restaurant.isOpen)
+                      ? Row(
+                          children: [
+                            const Icon(
+                              Icons.access_time_rounded,
+                              color: FoodlyApp.green,
+                              size: 17,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              "Ouvert",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Colors.green,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Icon(
+                              Icons.arrow_forward_rounded,
+                              color: FoodlyApp.green,
+                              size: 19,
+                            ),
+                          ],
+                        )
+                      : Row(
+                          children: [
+                            const Icon(
+                              Icons.access_time_rounded,
+                              color: FoodlyApp.orange,
+                              size: 17,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              "Fermer",
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: FoodlyApp.orange,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Icon(
+                              Icons.arrow_forward_rounded,
+                              color: FoodlyApp.orange,
+                              size: 19,
+                            ),
+                          ],
+                        ),
                 ],
               ),
             ),
@@ -665,52 +708,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
-  final List<Map<String, dynamic>> restaurants = [
-    {
-      'id': 'restaurant_1',
-      'name': 'Le Bon Goût',
-      'cuisine': 'Cuisine sénégalaise',
-      'rating': '4.8',
-      'time': '20-30 min',
-      'category': 'Sénégalais',
-      'color': const Color(0xFFB95D2B),
-      'image':
-          'https://images.unsplash.com/photo-1547592180-85f173990554?w=700',
-      'latitude': 14.6928,
-      'longitude': -17.4467,
-      'description': 'Cuisine sénégalaise et plats traditionnels.',
-    },
-    {
-      'id': 'restaurant_2',
-      'name': 'Burger House',
-      'cuisine': 'Burgers • Fast-food',
-      'rating': '4.7',
-      'time': '15-25 min',
-      'category': 'Fast-food',
-      'color': const Color(0xFF9C5636),
-      'image':
-          'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=700',
-      'latitude': 14.6995,
-      'longitude': -17.4570,
-      'description': 'Burgers et repas rapides.',
-    },
-    {
-      'id': 'restaurant_3',
-      'name': 'Pizza Palace',
-      'cuisine': 'Pizza • Italienne',
-      'rating': '4.6',
-      'time': '25-35 min',
-      'category': 'Pizza',
-      'color': const Color(0xFFC17D32),
-      'image':
-          'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=700',
-      'latitude': 14.7050,
-      'longitude': -17.4400,
-      'description': 'Pizzas et spécialités italiennes.',
-    },
-  ];
-
-  Widget _dishCard(Map<String, dynamic> dish, Map<String, dynamic> restaurant) {
+  Widget _dishCard(DishesModel dish, RestaurantModel? restaurant) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -718,8 +716,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
           MaterialPageRoute(
             builder: (_) => FoodDetailScreen(
               dish: dish,
-              restaurantName: restaurant['name']?.toString() ?? 'Restaurant',
-              restaurantId: restaurant['id']?.toString(),
+              restaurantName: restaurant?.name.toString() ?? "",
+              restaurantId: restaurant?.id.toString(),
             ),
           ),
         );
@@ -739,7 +737,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               height: 110,
               width: double.infinity,
               child: Image.network(
-                dish['image'],
+                dish.imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => const ColoredBox(
                   color: Color(0xFFFFE9D9),
@@ -754,7 +752,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               child: Text(
-                dish['name'],
+                dish.name,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -767,7 +765,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                dish['restaurant'],
+                dish.restaurant?.name ?? "",
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(color: Color(0xFF888888), fontSize: 10),
@@ -780,11 +778,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      dish['price'],
+                      '${dish.price} FCFA',
                       style: const TextStyle(
                         color: FoodlyApp.orange,
                         fontWeight: FontWeight.w800,
-                        fontSize: 12,
+                        fontSize: 13,
                       ),
                     ),
                   ),
@@ -792,23 +790,16 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     onTap: () {
                       setState(() {
                         foodlyCart.addItem(
-                          id:
-                              dish['id']?.toString() ??
-                              '${restaurant['name']}_${dish['name']}',
-                          name: dish['name']?.toString() ?? 'Plat',
-                          restaurantName:
-                              restaurant['name']?.toString() ?? 'Restaurant',
-                          unitPrice: int.parse(
-                            dish['price']
-                                .toString()
-                                .replaceAll(' ', '')
-                                .substring(0, 4),
-                          ),
+                          id: dish.id.toString(),
+                          name: dish.name.toString(),
+                          restaurantName: restaurant?.name.toString() ?? "",
+                          unitPrice: dish.price,
+                          idRestaurant: restaurant?.id ?? "",
                         );
                       });
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('${dish['name']} ajouté au panier.'),
+                          content: Text('${dish.name} ajouté au panier.'),
                           duration: const Duration(seconds: 1),
                         ),
                       );

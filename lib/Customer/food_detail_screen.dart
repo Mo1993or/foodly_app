@@ -1,4 +1,7 @@
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:foodly/model/dishes_model.dart';
+import 'package:foodly/model/restaurant_model.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -7,8 +10,8 @@ const Color foodlyGreen = Color(0xFF173D32);
 const Color foodlyBackground = Color(0xFFFAF8F3);
 
 class RestaurantDetailScreen extends StatefulWidget {
-  final Map<String, dynamic> restaurant;
-  final List<Map<String, dynamic>> dishes;
+  final RestaurantModel restaurant;
+  final List<DishesModel> dishes;
 
   const RestaurantDetailScreen({
     super.key,
@@ -23,46 +26,33 @@ class RestaurantDetailScreen extends StatefulWidget {
 class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
   GoogleMapController? _mapController;
 
-  Map<String, dynamic> get restaurant => widget.restaurant;
+  RestaurantModel get restaurant => widget.restaurant;
 
   String _text(String key, [String fallback = '']) {
-    return restaurant[key]?.toString() ?? fallback;
+    return restaurant.name.toString();
   }
 
-  double _coordinate(String key, double fallback) {
-    final value = restaurant[key];
+  double get latitude => widget.restaurant.latitude;
 
-    if (value is num) return value.toDouble();
+  double get longitude => widget.restaurant.longitude;
 
-    if (value is String) {
-      return double.tryParse(value.trim()) ?? fallback;
-    }
+  String get name => widget.restaurant.name;
 
-    return fallback;
-  }
-
-  double get latitude => _coordinate('latitude', 14.6928);
-
-  double get longitude => _coordinate('longitude', -17.4467);
-
-  String get name => _text('name', 'Restaurant');
-
-  String get imageUrl => _text('image');
+  String get imageUrl => widget.restaurant.coverPhotoUrl;
 
   String get category => _text('category', 'Restaurant');
 
-  String get cuisine => _text('cuisine', category);
+  String get cuisine => widget.restaurant.restaurantType;
 
-  String get description =>
-      _text('description', 'Découvrez les spécialités de $name.');
+  String get description => widget.restaurant.description;
 
-  String get rating => _text('rating', '4.5');
+  String get rating => widget.restaurant.reviewNote;
 
   String get deliveryTime => _text('time', '20-30 min');
 
   Color get restaurantColor {
-    final color = restaurant['color'];
-    return color is Color ? color : foodlyGreen;
+    final color = restaurant.colors[0].toString().toColor;
+    return color;
   }
 
   @override
@@ -441,9 +431,9 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
     );
   }
 
-  Widget _dishPreview(Map<String, dynamic> dish) {
-    final image = dish['image']?.toString() ?? '';
-    final price = dish['price']?.toString() ?? '';
+  Widget _dishPreview(DishesModel dish) {
+    final image = dish.imageUrl;
+    final price = dish.price;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -480,7 +470,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  dish['name']?.toString() ?? 'Plat',
+                  dish.name.toString(),
                   style: const TextStyle(
                     color: foodlyGreen,
                     fontWeight: FontWeight.bold,
@@ -489,7 +479,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  price,
+                  '$price',
                   style: const TextStyle(
                     color: foodlyOrange,
                     fontWeight: FontWeight.w800,
@@ -510,8 +500,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
 // ======================================================
 
 class RestaurantMenuScreen extends StatelessWidget {
-  final Map<String, dynamic> restaurant;
-  final List<Map<String, dynamic>> dishes;
+  final RestaurantModel restaurant;
+  final List<DishesModel> dishes;
 
   const RestaurantMenuScreen({
     super.key,
@@ -521,11 +511,9 @@ class RestaurantMenuScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final name = restaurant['name']?.toString() ?? 'Restaurant';
-    final image = restaurant['image']?.toString() ?? '';
-    final color = restaurant['color'] is Color
-        ? restaurant['color'] as Color
-        : foodlyGreen;
+    final name = restaurant.name.toString();
+    final image = restaurant.coverPhotoUrl;
+    final color = restaurant.colors[0].toString().toColor;
 
     return Scaffold(
       backgroundColor: foodlyBackground,
@@ -626,7 +614,7 @@ class RestaurantMenuScreen extends StatelessWidget {
                     separatorBuilder: (_, __) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final dish = dishes[index];
-                      final dishImage = dish['image']?.toString() ?? '';
+                      final dishImage = dish.imageUrl.toString();
 
                       return Container(
                         padding: const EdgeInsets.all(12),
@@ -671,7 +659,7 @@ class RestaurantMenuScreen extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    dish['name']?.toString() ?? 'Plat',
+                                    dish.name.toString(),
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
@@ -680,7 +668,7 @@ class RestaurantMenuScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
-                                    dish['price']?.toString() ?? '',
+                                    '${dish.price}',
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,

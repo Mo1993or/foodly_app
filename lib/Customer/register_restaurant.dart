@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:foodly/Auth/login_screen.dart';
 import 'package:foodly/service/auth_service.dart';
+import 'package:foodly/service/restaurant_service.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
 import 'package:google_places_flutter/model/prediction.dart';
 import 'package:image_picker/image_picker.dart';
@@ -60,25 +61,28 @@ class _RestaurantRegistrationPageState
 
   bool _locationSelected = false;
 
-  final List<String> _restaurantTypes = [
-    'Restaurant traditionnel',
-    'Fast-food',
-    'Pizzeria',
-    'Grillades',
-    'Cuisine sénégalaise',
-    'Cuisine africaine',
-    'Cuisine asiatique',
-    'Pâtisserie',
-    'Boulangerie',
-    'Café',
-    'Jus et boissons',
-    'Restaurant gastronomique',
-    'Végétarien',
-    'Fruits de mer',
-    'Autre',
-  ];
+  List<dynamic> restaurantTypes = [];
+  _fetchTypesList() async {
+    try {
+      await RestaurantService().fetchTypesRestaurants().then(
+        (value) => {
+          setState(() {
+            restaurantTypes = value;
+          }),
+        },
+      );
+    } catch (error) {
+      print("eeror");
+    }
+  }
 
   final List<Color> _restaurantColors = [];
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _fetchTypesList();
+  }
 
   @override
   void dispose() {
@@ -647,9 +651,9 @@ class _RestaurantRegistrationPageState
         icon: Icons.restaurant_menu_rounded,
         hint: 'Choisis une catégorie',
       ),
-      items: _restaurantTypes.map((type) {
+      items: restaurantTypes.map((type) {
         return DropdownMenuItem(
-          value: type,
+          value: type.toString(),
           child: Text(type, overflow: TextOverflow.ellipsis),
         );
       }).toList(),
@@ -1129,8 +1133,8 @@ class _RestaurantRegistrationPageState
         context,
         MaterialPageRoute(builder: (_) => const RestaurantLoginScreen()),
       );
-    } catch (_) {
-      if (!mounted) return;
+    } catch (eeerr) {
+      print("eeerr $eeerr");
       setState(() => _loading = false);
       _showMessage('Une erreur est survenue. Réessaie.');
     }

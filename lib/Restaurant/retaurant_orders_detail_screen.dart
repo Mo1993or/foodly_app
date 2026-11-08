@@ -2,11 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:foodly/Customer/food_detail_screen.dart';
 import 'package:foodly/Restaurant/retaurant_data.dart'
     hide foodlyGreen, foodlyOrange, foodlyBackground;
+import 'package:foodly/model/order_model.dart';
 
 class RestaurantOrderDetailScreen extends StatelessWidget {
-  final RestaurantOrder order;
+  final OrderModel order;
+  final String statusTranslate;
 
-  const RestaurantOrderDetailScreen({super.key, required this.order});
+  const RestaurantOrderDetailScreen({
+    super.key,
+    required this.order,
+    required this.statusTranslate,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +55,7 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Statut : ${order.status}',
+                  'Statut : ${statusTranslate}',
                   style: const TextStyle(color: Colors.white),
                 ),
               ],
@@ -65,16 +71,16 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          _infoTile(Icons.person_outline, order.customerName),
-          _infoTile(Icons.phone_outlined, order.customerPhone),
-          _infoTile(Icons.location_on_outlined, order.deliveryAddress),
+          _infoTile(Icons.person_outline, order.customer?.name ?? ""),
+          _infoTile(Icons.phone_outlined, order.customer?.phone ?? ""),
+          _infoTile(Icons.location_on_outlined, order.customer?.address ?? ""),
           _infoTile(
             Icons.access_time,
-            '${order.createdAt.day.toString().padLeft(2, '0')}/'
-            '${order.createdAt.month.toString().padLeft(2, '0')}/'
-            '${order.createdAt.year} à '
-            '${order.createdAt.hour.toString().padLeft(2, '0')}:'
-            '${order.createdAt.minute.toString().padLeft(2, '0')}',
+            '${DateTime.parse(order.createdAt).day.toString().padLeft(2, '0')}/'
+            '${DateTime.parse(order.createdAt).month.toString().padLeft(2, '0')}/'
+            '${DateTime.parse(order.createdAt).year} à '
+            '${DateTime.parse(order.createdAt).hour.toString().padLeft(2, '0')}:'
+            '${DateTime.parse(order.createdAt).minute.toString().padLeft(2, '0')}',
           ),
           const SizedBox(height: 24),
           const Text(
@@ -86,10 +92,10 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          ...order.items.map((item) {
-            final name = item['name']?.toString() ?? 'Plat';
-            final quantity = (item['quantity'] as num?)?.toInt() ?? 1;
-            final price = (item['price'] as num?)?.toInt() ?? 0;
+          ...order.item!.map((item) {
+            final name = item.name;
+            final quantity = item.quantity;
+            final price = item.price;
 
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
@@ -104,10 +110,13 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
                     width: 42,
                     height: 42,
                     decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage(item.imageUrl),
+                        fit: .cover,
+                      ),
                       color: foodlyOrange.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.restaurant, color: foodlyOrange),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -136,7 +145,7 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
               ),
             );
           }),
-          if (order.status == 'En attente') ...[
+          if (statusTranslate == 'En attente') ...[
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
@@ -150,15 +159,15 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
               ),
               child: const Text('Accepter la commande'),
             ),
-          ] else if (order.status == 'Acceptée' ||
-              order.status == 'En préparation' ||
-              order.status == 'Prête') ...[
+          ] else if (statusTranslate == 'Acceptée' ||
+              statusTranslate == 'En préparation' ||
+              statusTranslate == 'Prête') ...[
             const SizedBox(height: 16),
             ElevatedButton(
               onPressed: () {
-                final next = order.status == 'Acceptée'
+                final next = statusTranslate == 'Acceptée'
                     ? 'En préparation'
-                    : order.status == 'En préparation'
+                    : statusTranslate == 'En préparation'
                     ? 'Prête'
                     : 'Terminée';
 
@@ -171,7 +180,7 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
               ),
               child: Text(
-                order.status == 'Prête'
+                statusTranslate == 'Prête'
                     ? 'Marquer comme terminée'
                     : 'Passer à l’étape suivante',
               ),

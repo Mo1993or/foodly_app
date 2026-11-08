@@ -3,7 +3,9 @@ import 'package:foodly/Customer/customer_page.dart';
 import 'package:foodly/Customer/food_detail_screen.dart';
 import 'package:foodly/Restaurant/restaurant_dashbord_screen.dart';
 import 'package:foodly/Restaurant/restaurant_offer_screen.dart';
+import 'package:foodly/model/restaurant_model.dart';
 import 'package:foodly/service/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RestaurantLoginScreen extends StatefulWidget {
   const RestaurantLoginScreen({super.key});
@@ -27,6 +29,19 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
     super.dispose();
   }
 
+  _readEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    var emailValue = prefs.getString('email') ?? "";
+    setState(() {
+      if (emailValue != "") {
+        _emailController.text = emailValue;
+      }
+    });
+  }
+
+  RestaurantModel? restaurant;
+  List<String> listOfferType = ["PRO", "FREE", "STARTER", "PREMIUM"];
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -45,10 +60,34 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
       var result = await AuthService().signIn(data);
       print("result $result");
       setState(() => _isLoading = false);
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const RestaurantOffersScreen()),
+      restaurant = RestaurantModel.fromJSON(result["data"]["restaurant"]);
+
+      print(
+        "restaurant log ${result["data"]["restaurant"]["activeOffer"].toString()}",
       );
+      print(
+        "restaurant log ${listOfferType.contains(result["data"]["restaurant"]["activeOffer"].toString())}",
+      );
+      if (result["data"]["restaurant"]["activeOffer"].toString() != "") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RestaurantDashboardScreen(
+              selectedOffer: result["data"]["restaurant"]["activeOffer"]
+                  .toString(),
+              restaurant: restaurant,
+              statusPayment: '',
+            ),
+          ),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RestaurantOffersScreen(restaurant: restaurant),
+          ),
+        );
+      }
     } catch (error) {
       print("error $error");
       if (!mounted) return;
@@ -63,6 +102,13 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), behavior: SnackBarBehavior.floating),
     );
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _readEmail();
   }
 
   @override

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/customer_order_store.dart';
 import 'package:foodly/Customer/panier_page.dart';
+import 'package:foodly/service/order_service.dart';
 
 const Color foodlyOrange = Color(0xFFF56624);
 const Color foodlyGreen = Color(0xFF173D32);
@@ -51,7 +52,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
     final orderId = DateTime.now().millisecondsSinceEpoch.toString();
 
-    clientOrdersStore.addOrder(
+    await clientOrdersStore.addOrder(
       ClientOrder(
         id: orderId,
         customerName: orderMap['customerName'] as String,
@@ -63,30 +64,50 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
         createdAt: DateTime.now(),
       ),
     );
-
-    foodlyCart.clear();
+    // foodlyCart.clear();
 
     if (!mounted) return;
+    List<Map<String, dynamic>> itemList = [];
+    Map<String, dynamic> itemApi;
+    for (var element in List<Map<String, dynamic>>.from(orderMap['items'])) {
+      itemApi = {
+        "restaurantId": element["restaurantId"],
+        "productId": element["id"],
+        "quantity": element["quantity"],
+      };
+      print("itemApi $itemApi");
+      itemList.add(itemApi);
+    }
+    print("itemList $itemList");
+    try {
+      print("restaurant id ${orderMap['items'][0]['restaurantId'] as String}");
+      var data = {
+        "customer": {
+          "name": orderMap['customerName'] as String,
+          "phone": orderMap['phone'] as String,
+          "address": orderMap['address'] as String,
+        },
+        "items": itemList,
+        "note": orderMap['notes'] as String? ?? '',
+      };
+      setState(() => _isSubmitting = false);
+      var result = await OrdersService().creatOrders(data);
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OrderConfirmationScreen(
-          customerName: _nameController.text.trim(),
-          phone: _phoneController.text.trim(),
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OrderConfirmationScreen(
+            customerName: _nameController.text.trim(),
+            phone: _phoneController.text.trim(),
+          ),
         ),
-      ),
-    );
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OrderConfirmationScreen(
-          customerName: _nameController.text.trim(),
-          phone: _phoneController.text.trim(),
-        ),
-      ),
-    );
+      );
+    } catch (err) {
+      print("err $err");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$err'), duration: const Duration(seconds: 1)),
+      );
+    }
   }
 
   @override

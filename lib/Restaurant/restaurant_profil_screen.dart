@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:foodly/Auth/login_screen.dart';
 import 'package:foodly/Customer/food_detail_screen.dart';
+import 'package:foodly/Restaurant/restaurant_offer_screen.dart';
 import 'package:foodly/Restaurant/retaurant_data.dart'
     hide foodlyGreen, foodlyBackground, foodlyOrange;
+import 'package:foodly/model/restaurant_model.dart';
 
 class RestaurantProfileScreen extends StatefulWidget {
-  const RestaurantProfileScreen({super.key});
+  final RestaurantModel? restaurant;
+  const RestaurantProfileScreen({super.key, this.restaurant});
 
   @override
   State<RestaurantProfileScreen> createState() =>
@@ -26,15 +30,17 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
   void initState() {
     super.initState();
 
-    _nameController = TextEditingController(text: restaurantData.name);
-    _addressController = TextEditingController(text: restaurantData.address);
-    _phoneController = TextEditingController(text: restaurantData.phone);
-    _emailController = TextEditingController(text: restaurantData.email);
+    _nameController = TextEditingController(text: widget.restaurant?.name);
+    _addressController = TextEditingController(
+      text: widget.restaurant?.address,
+    );
+    _phoneController = TextEditingController(text: widget.restaurant?.phone);
+    // _emailController = TextEditingController(text: widget.restaurant?.email);
     _descriptionController = TextEditingController(
-      text: restaurantData.description,
+      text: widget.restaurant?.description,
     );
 
-    _isOpen = restaurantData.isOpen;
+    _isOpen = widget.restaurant!.isOpen;
   }
 
   @override
@@ -72,6 +78,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
     return Scaffold(
       backgroundColor: foodlyBackground,
       appBar: AppBar(
+        leading: Container(),
         backgroundColor: foodlyBackground,
         title: const Text(
           'Mon restaurant',
@@ -106,9 +113,9 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                   ),
                   const SizedBox(height: 14),
                   Text(
-                    _nameController.text.isEmpty
+                    widget.restaurant?.name == null
                         ? 'Mon restaurant'
-                        : _nameController.text,
+                        : widget.restaurant?.name ?? "",
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       color: Colors.white,
@@ -118,12 +125,74 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    _isOpen ? 'Ouvert aux commandes' : 'Fermé',
+                    widget.restaurant!.isOpen
+                        ? 'Ouvert aux commandes'
+                        : 'Fermé',
                     style: TextStyle(
-                      color: _isOpen ? Colors.greenAccent : Colors.orangeAccent,
+                      color: widget.restaurant!.isOpen
+                          ? Colors.greenAccent
+                          : Colors.orangeAccent,
                     ),
                   ),
                 ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Bouton changer d'offre
+            SizedBox(
+              height: 54,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          RestaurantOffersScreen(restaurant: widget.restaurant),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.workspace_premium_rounded),
+                label: const Text(
+                  'Changer d’offre',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: foodlyGreen,
+                  side: const BorderSide(color: foodlyGreen, width: 1.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // Bouton déconnexion
+            SizedBox(
+              height: 54,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => RestaurantLoginScreen()),
+                  );
+                  // TODO: Ajouter la logique de déconnexion
+                },
+                icon: const Icon(Icons.logout_rounded),
+                label: const Text(
+                  'Se déconnecter',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFFEEEE),
+                  foregroundColor: Colors.red.shade700,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
               ),
             ),
             const SizedBox(height: 25),
@@ -163,23 +232,23 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
               keyboardType: TextInputType.phone,
               validator: _required,
             ),
-            _field(
-              controller: _emailController,
-              label: 'Adresse e-mail',
-              icon: Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'L’e-mail est obligatoire.';
-                }
-                if (!RegExp(
-                  r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
-                ).hasMatch(value.trim())) {
-                  return 'Adresse e-mail invalide.';
-                }
-                return null;
-              },
-            ),
+            // _field(
+            //   controller: _emailController,
+            //   label: 'Adresse e-mail',
+            //   icon: Icons.email_outlined,
+            //   keyboardType: TextInputType.emailAddress,
+            //   validator: (value) {
+            //     if (value == null || value.trim().isEmpty) {
+            //       return 'L’e-mail est obligatoire.';
+            //     }
+            //     if (!RegExp(
+            //       r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+            //     ).hasMatch(value.trim())) {
+            //       return 'Adresse e-mail invalide.';
+            //     }
+            //     return null;
+            //   },
+            // ),
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),

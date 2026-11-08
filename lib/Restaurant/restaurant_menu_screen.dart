@@ -1,20 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Restaurant/retaurant_data.dart';
+import 'package:foodly/model/dishes_model.dart';
+import 'package:foodly/model/restaurant_model.dart';
+import 'package:foodly/service/restaurant_service.dart';
 import 'restaurant_add_edit_dish_screen.dart';
 
-class RestaurantMenuScreen extends StatelessWidget {
-  const RestaurantMenuScreen({super.key});
+class RestaurantMenuScreen extends StatefulWidget {
+  final RestaurantModel? restaurant;
+  const RestaurantMenuScreen({super.key, this.restaurant});
+
+  @override
+  State<RestaurantMenuScreen> createState() => _RestaurantMenuScreenState();
+}
+
+class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
+  List<DishesModel> dishesList = [];
+
+  _fetchDishes() async {
+    print("access");
+    try {
+      await RestaurantService()
+          .fetchDishes(idRestaurants: widget.restaurant?.id ?? "")
+          .then(
+            (value) => {
+              setState(() {
+                dishesList = value;
+              }),
+            },
+          );
+    } catch (err) {
+      print("error $err");
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _fetchDishes();
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: restaurantData,
       builder: (context, _) {
-        final dishes = restaurantData.dishes;
+        final dishes = dishesList;
 
         return Scaffold(
           backgroundColor: foodlyBackground,
           appBar: AppBar(
+            leading: Container(),
             backgroundColor: foodlyBackground,
             title: const Text(
               'Mon menu',
@@ -142,7 +178,7 @@ class RestaurantMenuScreen extends StatelessWidget {
     );
   }
 
-  Widget _dishImage(RestaurantDish dish) {
+  Widget _dishImage(DishesModel dish) {
     return Container(
       width: 88,
       height: 94,
@@ -162,19 +198,20 @@ class RestaurantMenuScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _openDishForm(
-    BuildContext context, {
-    RestaurantDish? dish,
-  }) async {
+  Future<void> _openDishForm(BuildContext context, {DishesModel? dish}) async {
+    print("restaurant ${widget.restaurant}");
     await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => RestaurantAddEditDishScreen(dish: dish),
+        builder: (_) => RestaurantAddEditDishScreen(
+          dish: dish,
+          restaurant: widget.restaurant,
+        ),
       ),
     );
   }
 
-  Future<void> _deleteDish(BuildContext context, RestaurantDish dish) async {
+  Future<void> _deleteDish(BuildContext context, DishesModel dish) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(

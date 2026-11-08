@@ -1,9 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/food_detail_screen.dart';
 import 'package:foodly/Restaurant/restaurant_dashbord_screen.dart';
+import 'package:foodly/Utils/network.dart';
+import 'package:foodly/model/offer_model.dart';
+import 'package:foodly/model/restaurant_model.dart';
+import 'package:foodly/service/restaurant_service.dart';
+import 'package:foodly/widget/shimers.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RestaurantOffersScreen extends StatefulWidget {
-  const RestaurantOffersScreen({super.key});
+  final RestaurantModel? restaurant;
+  const RestaurantOffersScreen({super.key, required this.restaurant});
 
   @override
   State<RestaurantOffersScreen> createState() => _RestaurantOffersScreenState();
@@ -11,64 +18,92 @@ class RestaurantOffersScreen extends StatefulWidget {
 
 class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
   String _selectedOffer = 'pro';
+  String _name = 'pro';
 
-  final List<_RestaurantOffer> _offers = [
-    _RestaurantOffer(
-      id: 'starter',
-      name: 'Starter',
-      subtitle: 'Pour démarrer',
-      price: 5000,
-      period: 'mois',
-      icon: Icons.rocket_launch_outlined,
-      features: [
-        'Jusqu’à 15 produits',
-        'Gestion des commandes',
-        'Profil restaurant',
-        'Statistiques de base',
-      ],
-    ),
-    _RestaurantOffer(
-      id: 'pro',
-      name: 'Pro',
-      subtitle: 'Pour développer ton activité',
-      price: 10000,
-      period: 'mois',
-      icon: Icons.trending_up,
-      recommended: true,
-      features: [
-        'Produits illimités',
-        'Gestion des commandes',
-        'Statistiques avancées',
-        'Mise en avant standard',
-        'Assistance prioritaire',
-      ],
-    ),
-    _RestaurantOffer(
-      id: 'premium',
-      name: 'Premium',
-      subtitle: 'Pour aller plus loin',
-      price: 20000,
-      period: 'mois',
-      icon: Icons.workspace_premium_outlined,
-      features: [
-        'Produits illimités',
-        'Mise en avant renforcée',
-        'Statistiques avancées',
-        'Priorité dans les résultats',
-        'Assistance dédiée',
-      ],
-    ),
-  ];
+  List<OfferModel> listOffers = [];
+  bool isLoading = false;
+  _fetchOffers() async {
+    try {
+      setState(() {
+        isLoading = true;
+      });
+      await RestaurantService().fetchOffer().then(
+        (value) => {
+          setState(() {
+            listOffers = value;
+            isLoading = false;
+            _selectedOffer = "pro";
+            // _name = listOffers.firstWhere((o) => o.name == _selectedOffer).name;
+          }),
+        },
+      );
+    } catch (err) {
+      print("err $err");
+    }
+  }
 
-  void _continue() {
-    final offer = _offers.firstWhere((item) => item.id == _selectedOffer);
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _fetchOffers();
+  }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => RestaurantDashboardScreen(selectedOffer: offer.name),
-      ),
-    );
+  bool _isLoading = false;
+  _launchPayment() async {
+    var url = apiUrlPayment;
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
+  }
+
+  Future<void> _continue() async {
+    final offer = listOffers.firstWhere((item) => item.id != "");
+    if (_selectedOffer == "") {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Veuillez choisir un offre"),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } else {
+      setState(() {
+        _isLoading = true;
+      });
+      final offer = listOffers.firstWhere(
+        (item) => item.name == _selectedOffer,
+      );
+      try {
+        var data = {
+          "restaurantId": widget.restaurant?.id ?? "",
+          "offerId": offer.id,
+        };
+        var result = await RestaurantService().subscriptionOffer(data);
+
+        print("result $result");
+        setState(() {
+          _isLoading = false;
+        });
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RestaurantDashboardScreen(
+              selectedOffer: offer.name,
+              restaurant: widget.restaurant,
+              statusPayment: result['subscription']["status"].toString(),
+            ),
+          ),
+        );
+        await _launchPayment();
+      } catch (err) {
+        setState(() {
+          _isLoading = false;
+        });
+        print("err $err");
+      }
+    }
   }
 
   @override
@@ -76,179 +111,190 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
     return Scaffold(
       backgroundColor: foodlyBackground,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+        child: (isLoading)
+            ? const RestaurantShimmer(itemCount: 4)
+            : Column(
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: foodlyGreen,
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        child: const Icon(
-                          Icons.restaurant,
-                          color: Colors.white,
-                          size: 26,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Foodly Business',
-                          style: TextStyle(
-                            color: foodlyGreen,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-                  Container(
-                    padding: const EdgeInsets.all(22),
-                    decoration: BoxDecoration(
-                      color: foodlyGreen,
-                      borderRadius: BorderRadius.circular(26),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          child: const Text(
-                            'ESPACE RESTAURATEUR',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              letterSpacing: 1.2,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                        const Text(
-                          'Fais grandir ton restaurant avec Foodly.',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 27,
-                            height: 1.2,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        const Text(
-                          'Choisis la formule adaptée à ton activité '
-                          'et commence à recevoir des commandes.',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            height: 1.5,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        const Row(
+                        Row(
                           children: [
-                            Icon(
-                              Icons.check_circle,
-                              color: Colors.greenAccent,
-                              size: 18,
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: foodlyGreen,
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                              child: const Icon(
+                                Icons.restaurant,
+                                color: Colors.white,
+                                size: 26,
+                              ),
                             ),
-                            SizedBox(width: 8),
-                            Expanded(
+                            const SizedBox(width: 12),
+                            const Expanded(
                               child: Text(
-                                'Menu numérique et gestion des commandes',
-                                style: TextStyle(color: Colors.white),
+                                'Foodly Business',
+                                style: TextStyle(
+                                  color: foodlyGreen,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                ),
                               ),
                             ),
                           ],
                         ),
+                        const SizedBox(height: 28),
+                        Container(
+                          padding: const EdgeInsets.all(22),
+                          decoration: BoxDecoration(
+                            color: foodlyGreen,
+                            borderRadius: BorderRadius.circular(26),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 7,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.12),
+                                  borderRadius: BorderRadius.circular(30),
+                                ),
+                                child: const Text(
+                                  'ESPACE RESTAURATEUR',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    letterSpacing: 1.2,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 18),
+                              const Text(
+                                'Fais grandir ton restaurant avec Foodly.',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 27,
+                                  height: 1.2,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              const Text(
+                                'Choisis la formule adaptée à ton activité '
+                                'et commence à recevoir des commandes.',
+                                style: TextStyle(
+                                  color: Colors.white70,
+                                  height: 1.5,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              const Row(
+                                children: [
+                                  Icon(
+                                    Icons.check_circle,
+                                    color: Colors.greenAccent,
+                                    size: 18,
+                                  ),
+                                  SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      'Menu numérique et gestion des commandes',
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 26),
+                        const Text(
+                          'Choisis ton offre',
+                          style: TextStyle(
+                            color: foodlyGreen,
+                            fontSize: 23,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'Sélectionne la formule qui te convient.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                        const SizedBox(height: 18),
+                        ...listOffers.map(_offerCard),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Tarifs indicatifs en FCFA. Les abonnements et '
+                          'les paiements devront être configurés avant '
+                          'une mise en production.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 11,
+                            height: 1.5,
+                          ),
+                        ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 26),
-                  const Text(
-                    'Choisis ton offre',
-                    style: TextStyle(
-                      color: foodlyGreen,
-                      fontSize: 23,
-                      fontWeight: FontWeight.bold,
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      border: Border(top: BorderSide(color: Color(0xFFECEAE4))),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    'Sélectionne la formule qui te convient.',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                  const SizedBox(height: 18),
-                  ..._offers.map(_offerCard),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Tarifs indicatifs en FCFA. Les abonnements et '
-                    'les paiements devront être configurés avant '
-                    'une mise en production.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 11,
-                      height: 1.5,
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 54,
+                      child: ElevatedButton(
+                        onPressed: _continue,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: foodlyOrange,
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 23,
+                                height: 23,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white,
+                                ),
+                              )
+                            : Text(
+                                'Continuer',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                      ),
                     ),
                   ),
                 ],
               ),
-            ),
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 14, 20, 18),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                border: Border(top: BorderSide(color: Color(0xFFECEAE4))),
-              ),
-              child: SizedBox(
-                width: double.infinity,
-                height: 54,
-                child: ElevatedButton(
-                  onPressed: _continue,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: foodlyOrange,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: Text(
-                    'Continuer avec ${_offers.firstWhere((o) => o.id == _selectedOffer).name}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
 
-  Widget _offerCard(_RestaurantOffer offer) {
-    final selected = _selectedOffer == offer.id;
+  Widget _offerCard(OfferModel offer) {
+    final selected = _selectedOffer == offer.name;
 
     return GestureDetector(
-      onTap: () => setState(() => _selectedOffer = offer.id),
+      onTap: () => setState(() => _selectedOffer = offer.name),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         margin: const EdgeInsets.only(bottom: 15),
@@ -264,7 +310,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (offer.recommended)
+            if (offer.isPopular)
               Container(
                 margin: const EdgeInsets.only(bottom: 14),
                 padding: const EdgeInsets.symmetric(
@@ -294,7 +340,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                     color: foodlyGreen.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  child: Icon(offer.icon, color: foodlyGreen, size: 26),
+                  child: Icon(Icons.local_offer, color: foodlyGreen, size: 26),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -310,7 +356,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                         ),
                       ),
                       Text(
-                        offer.subtitle,
+                        offer.name,
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 12,
@@ -320,7 +366,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                   ),
                 ),
                 Radio<String>(
-                  value: offer.id,
+                  value: offer.name,
                   groupValue: _selectedOffer,
                   activeColor: foodlyOrange,
                   onChanged: (value) {
@@ -376,31 +422,16 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                 ),
               ),
             ),
+            Container(
+              margin: EdgeInsets.all(10),
+              child: Text(
+                offer.description,
+                style: const TextStyle(color: foodlyGreen, fontSize: 13),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
-}
-
-class _RestaurantOffer {
-  final String id;
-  final String name;
-  final String subtitle;
-  final int price;
-  final String period;
-  final IconData icon;
-  final bool recommended;
-  final List<String> features;
-
-  const _RestaurantOffer({
-    required this.id,
-    required this.name,
-    required this.subtitle,
-    required this.price,
-    required this.period,
-    required this.icon,
-    required this.features,
-    this.recommended = false,
-  });
 }

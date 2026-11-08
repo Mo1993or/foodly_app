@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/panier_page.dart';
+import 'package:foodly/model/dishes_model.dart';
 
 const Color foodlyOrange = Color(0xFFF56624);
 const Color foodlyGreen = Color(0xFF173D32);
 const Color foodlyBackground = Color(0xFFFAF8F3);
 
 class FoodDetailScreen extends StatefulWidget {
-  final Map<String, dynamic> dish;
+  final DishesModel dish;
   final String restaurantName;
   final String? restaurantId;
 
@@ -24,25 +25,18 @@ class FoodDetailScreen extends StatefulWidget {
 class _FoodDetailScreenState extends State<FoodDetailScreen> {
   int quantity = 1;
 
-  String get foodName => widget.dish['name']?.toString() ?? 'Plat';
+  String get foodName => widget.dish.name.toString();
 
-  int get foodPrice => int.parse(
-    widget.dish['price'].toString().replaceAll(" ", '').substring(0, 4),
-  );
+  int get foodPrice => widget.dish.price;
 
   String? get imageUrl {
-    final value =
-        widget.dish['imageUrl'] ??
-        widget.dish['image'] ??
-        widget.dish['image_url'];
+    final value = widget.dish.imageUrl;
 
     if (value == null || value.toString().isEmpty) return null;
     return value.toString();
   }
 
-  String get description =>
-      widget.dish['description']?.toString() ??
-      'Découvre ce délicieux plat préparé avec soin par notre restaurant partenaire.';
+  String get description => widget.dish.description.toString();
 
   @override
   Widget build(BuildContext context) {
@@ -104,7 +98,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                       ),
                       const SizedBox(width: 5),
                       Text(
-                        widget.dish['rating']?.toString() ?? 'Nouveau',
+                        'Nouveau',
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(width: 12),
@@ -265,16 +259,14 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   }
 
   void _addToCart() {
-    final dishId =
-        widget.dish['id']?.toString() ??
-        '${widget.restaurantId ?? widget.restaurantName}_$foodName';
-
+    final dishId = widget.dish.id.toString();
     foodlyCart.addItem(
       id: dishId,
       name: foodName,
       restaurantName: widget.restaurantName,
       unitPrice: foodPrice,
       quantity: quantity,
+      idRestaurant: widget.restaurantId ?? "",
     );
 
     ScaffoldMessenger.of(context).showSnackBar(

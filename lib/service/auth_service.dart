@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:foodly/Utils/network.dart';
+import 'package:foodly/model/restaurant_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -8,6 +9,11 @@ class AuthService {
   static _saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString('token', token);
+  }
+
+  static _saveEmail(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.setString('email', email);
   }
 
   dynamic signIn(var data) async {
@@ -25,6 +31,8 @@ class AuthService {
         if (response.statusCode == 200) {
           print("object  ${responseData["data"]["user"]}");
           _saveToken(responseData["data"]["accessToken"].toString());
+          _saveEmail(responseData["data"]["user"]["email"]);
+          RestaurantModel.fromJSON(responseData["data"]["restaurant"]);
         }
         return responseData;
       } else {

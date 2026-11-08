@@ -1,10 +1,14 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 const Color foodlyOrange = Color(0xFFF56624);
 const Color foodlyGreen = Color(0xFF173D32);
 const Color foodlyBackground = Color(0xFFFAF8F3);
 
 class CartItem {
+  final String restaurantId;
   final String id;
   final String name;
   final String restaurantName;
@@ -14,6 +18,7 @@ class CartItem {
   CartItem({
     required this.id,
     required this.name,
+    required this.restaurantId,
     required this.restaurantName,
     required this.unitPrice,
     this.quantity = 1,
@@ -23,7 +28,11 @@ class CartItem {
 }
 
 class FoodlyCart extends ChangeNotifier {
+  static const String _storageKey = 'foodly_cart';
+
   final List<CartItem> _items = [];
+
+  bool _isLoaded = false;
 
   List<CartItem> get items => List.unmodifiable(_items);
 
@@ -31,7 +40,65 @@ class FoodlyCart extends ChangeNotifier {
 
   int get totalPrice => _items.fold(0, (total, item) => total + item.subtotal);
 
+  /// Charger le panier sauvegardé.
+  Future<void> loadCart() async {
+    if (_isLoaded) return;
+
+    final prefs = await SharedPreferences.getInstance();
+    final storedCart = prefs.getString(_storageKey);
+
+    if (storedCart != null && storedCart.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(storedCart) as List<dynamic>;
+
+        _items
+          ..clear()
+          ..addAll(
+            decoded.map((item) {
+              final data = Map<String, dynamic>.from(item as Map);
+
+              return CartItem(
+                id: data['id'] as String,
+                name: data['name'] as String,
+                restaurantName: data['restaurantName'] as String,
+                unitPrice: (data['unitPrice'] as num).toInt(),
+                quantity: (data['quantity'] as num).toInt(),
+                restaurantId: data['restaurantId'] as String,
+              );
+            }),
+          );
+      } catch (e) {
+        debugPrint('Erreur chargement panier : $e');
+      }
+    }
+
+    _isLoaded = true;
+    notifyListeners();
+  }
+
+  /// Sauvegarder le panier.
+  Future<void> _saveCart() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    final encoded = jsonEncode(
+      _items
+          .map(
+            (item) => {
+              'id': item.id,
+              'name': item.name,
+              'restaurantName': item.restaurantName,
+              'unitPrice': item.unitPrice,
+              'quantity': item.quantity,
+            },
+          )
+          .toList(),
+    );
+
+    await prefs.setString(_storageKey, encoded);
+  }
+
   void addItem({
+    required String idRestaurant,
     required String id,
     required String name,
     required String restaurantName,
@@ -50,11 +117,48 @@ class FoodlyCart extends ChangeNotifier {
           restaurantName: restaurantName,
           unitPrice: unitPrice,
           quantity: quantity,
+          restaurantId: idRestaurant,
         ),
       );
     }
 
+    _saveAndNotify();
+  }
+
+  void increaseQuantity(String id) {
+    final index = _items.indexWhere((item) => item.id == id);
+    if (index == -1) return;
+
+    _items[index].quantity++;
+    _saveAndNotify();
+  }
+
+  void decreaseQuantity(String id) {
+    final index = _items.indexWhere((item) => item.id == id);
+    if (index == -1) return;
+
+    if (_items[index].quantity > 1) {
+      _items[index].quantity--;
+    } else {
+      _items.removeAt(index);
+    }
+
+    _saveAndNotify();
+  }
+
+  void removeItem(String id) {
+    _items.removeWhere((item) => item.id == id);
+    _saveAndNotify();
+  }
+
+  void clear() {
+    _items.clear();
+    _saveAndNotify();
+  }
+
+  Future<void> _saveAndNotify() async {
     notifyListeners();
+    await _saveCart();
   }
 
   Map<String, dynamic> toOrderMap({
@@ -72,6 +176,7 @@ class FoodlyCart extends ChangeNotifier {
         return {
           'id': item.id,
           'name': item.name,
+          'restaurantId': item.restaurantId,
           'restaurantName': item.restaurantName,
           'unitPrice': item.unitPrice,
           'quantity': item.quantity,
@@ -83,35 +188,6 @@ class FoodlyCart extends ChangeNotifier {
       'createdAt': DateTime.now().toIso8601String(),
       'status': 'pending',
     };
-  }
-
-  void increaseQuantity(String id) {
-    final item = _items.firstWhere((item) => item.id == id);
-    item.quantity++;
-    notifyListeners();
-  }
-
-  void decreaseQuantity(String id) {
-    final index = _items.indexWhere((item) => item.id == id);
-    if (index == -1) return;
-
-    if (_items[index].quantity > 1) {
-      _items[index].quantity--;
-    } else {
-      _items.removeAt(index);
-    }
-
-    notifyListeners();
-  }
-
-  void removeItem(String id) {
-    _items.removeWhere((item) => item.id == id);
-    notifyListeners();
-  }
-
-  void clear() {
-    _items.clear();
-    notifyListeners();
   }
 }
 
