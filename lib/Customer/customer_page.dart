@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Auth/login_screen.dart';
 import 'package:foodly/Customer/checkout_page.dart';
-import 'package:foodly/Customer/explorer_page.dart';
-import 'package:foodly/Customer/food_detail_page.dart';
-import 'package:foodly/Customer/food_detail_screen.dart';
-import 'package:foodly/Customer/my_order_screen.dart';
-import 'package:foodly/Customer/panier_page.dart';
+import 'package:foodly/Customer/explorer_page.dart' hide foodlyOrange;
+import 'package:foodly/Customer/food_detail_page.dart' hide foodlyOrange;
+import 'package:foodly/Customer/food_detail_screen.dart' hide foodlyOrange;
+import 'package:foodly/Customer/my_order_screen.dart' hide foodlyOrange;
+import 'package:foodly/Customer/panier_page.dart' hide foodlyOrange;
 import 'package:foodly/Customer/profile_page.dart';
 import 'package:foodly/main.dart';
 import 'package:foodly/model/dishes_model.dart';
@@ -92,6 +92,10 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         isLoading = false;
       });
     }
+  }
+
+  Future<void> _refreshHome() async {
+    await Future.wait([_fetchRestaurant(), _fetchTypesList(), _fetchDishes()]);
   }
 
   Future<void> _fetchTypesList() async {
@@ -183,104 +187,114 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   Widget _buildHome() {
     final filteredRestaurants = _filteredRestaurants;
 
-    return CustomScrollView(
-      slivers: [
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-          sliver: SliverToBoxAdapter(child: _buildHeader()),
+    return RefreshIndicator(
+      color: foodlyOrange,
+      backgroundColor: Colors.white,
+      strokeWidth: 2.5,
+      displacement: 55,
+      onRefresh: _refreshHome,
+      child: CustomScrollView(
+        physics: const AlwaysScrollableScrollPhysics(
+          parent: BouncingScrollPhysics(),
         ),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+            sliver: SliverToBoxAdapter(child: _buildHeader()),
+          ),
 
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
-          sliver: SliverToBoxAdapter(child: _buildSearch()),
-        ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
+            sliver: SliverToBoxAdapter(child: _buildSearch()),
+          ),
 
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
-          sliver: SliverToBoxAdapter(child: _buildBanner()),
-        ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
+            sliver: SliverToBoxAdapter(child: _buildBanner()),
+          ),
 
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 26, 20, 0),
-          sliver: SliverToBoxAdapter(child: _buildCategories()),
-        ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 26, 20, 0),
+            sliver: SliverToBoxAdapter(child: _buildCategories()),
+          ),
 
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
-          sliver: SliverToBoxAdapter(
-            child: _sectionTitle(
-              'Restaurants à découvrir',
-              'Voir tout',
-              () => setState(() => _selectedTab = 1),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
+            sliver: SliverToBoxAdapter(
+              child: _sectionTitle(
+                'Restaurants à découvrir',
+                'Voir tout',
+                () => setState(() => _selectedTab = 1),
+              ),
             ),
           ),
-        ),
 
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                if (filteredRestaurants.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.all(24),
-                    child: Text(
-                      'Aucun restaurant trouvé. Essayez une autre recherche.',
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _restaurantCard(filteredRestaurants[index]),
-                );
-              },
-              childCount: filteredRestaurants.isEmpty
-                  ? 1
-                  : filteredRestaurants.length.clamp(0, 3),
-            ),
-          ),
-        ),
-
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-          sliver: SliverToBoxAdapter(
-            child: _sectionTitle(
-              'Les plats populaires',
-              'Explorer',
-              () => setState(() => _selectedTab = 1),
-            ),
-          ),
-        ),
-
-        SliverPadding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
-          sliver: SliverToBoxAdapter(
-            child: SizedBox(
-              height: 225,
-              child: dishes.isEmpty
-                  ? const Center(
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  if (filteredRestaurants.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(24),
                       child: Text(
-                        'Aucun plat disponible pour le moment.',
-                        style: TextStyle(color: Colors.grey),
+                        'Aucun restaurant trouvé. Essayez une autre recherche.',
+                        textAlign: TextAlign.center,
                       ),
-                    )
-                  : ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: dishes.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 14),
-                      itemBuilder: (context, index) {
-                        return _dishCard(
-                          dishes[index],
-                          dishes[index].restaurant,
-                        );
-                      },
-                    ),
+                    );
+                  }
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _restaurantCard(filteredRestaurants[index]),
+                  );
+                },
+                childCount: filteredRestaurants.isEmpty
+                    ? 1
+                    : filteredRestaurants.length.clamp(0, 3),
+              ),
             ),
           ),
-        ),
-      ],
+
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+            sliver: SliverToBoxAdapter(
+              child: _sectionTitle(
+                'Les plats populaires',
+                'Explorer',
+                () => setState(() => _selectedTab = 1),
+              ),
+            ),
+          ),
+
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+            sliver: SliverToBoxAdapter(
+              child: SizedBox(
+                height: 225,
+                child: dishes.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Aucun plat disponible pour le moment.',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      )
+                    : ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: dishes.length,
+                        separatorBuilder: (_, __) => const SizedBox(width: 14),
+                        itemBuilder: (context, index) {
+                          return _dishCard(
+                            dishes[index],
+                            dishes[index].restaurant,
+                          );
+                        },
+                      ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
