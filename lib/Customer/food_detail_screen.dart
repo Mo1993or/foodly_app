@@ -479,7 +479,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  '$price',
+                  '$price FCFA',
                   style: const TextStyle(
                     color: foodlyOrange,
                     fontWeight: FontWeight.w800,
@@ -668,7 +668,7 @@ class RestaurantMenuScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
-                                    '${dish.price}',
+                                    '${dish.price} FCFA',
                                     style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,

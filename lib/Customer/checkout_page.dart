@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/customer_order_store.dart';
+import 'package:foodly/Customer/customer_profil_store.dart';
 import 'package:foodly/Customer/panier_page.dart';
 import 'package:foodly/service/order_service.dart';
 
@@ -21,8 +22,57 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _notesController = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+    _loadCustomerInfo();
+  }
 
   bool _isSubmitting = false;
+  Future<void> _loadCustomerInfo() async {
+    try {
+      // 1. Charger le profil client indépendant.
+      final profile = await ClientProfileStore.loadProfile();
+
+      String name = profile['name'] ?? '';
+      String phone = profile['phone'] ?? '';
+      String address = profile['address'] ?? '';
+
+      // 2. Si le profil est vide, chercher dans l'historique.
+      if (name.isEmpty && phone.isEmpty && address.isEmpty) {
+        await clientOrdersStore.loadOrders();
+
+        final orders = clientOrdersStore.orders;
+
+        if (orders.isNotEmpty) {
+          final lastOrder = orders.first;
+
+          name = lastOrder.customerName;
+          phone = lastOrder.phone;
+          address = lastOrder.address;
+
+          // 3. Migrer les anciennes coordonnées vers le profil.
+          await ClientProfileStore.saveProfile(
+            name: name,
+            phone: phone,
+            address: address,
+          );
+        }
+      }
+
+      if (!mounted) return;
+
+      _nameController.text = name;
+      _phoneController.text = phone;
+      _addressController.text = address;
+    } catch (e) {
+      debugPrint('Erreur récupération coordonnées client : $e');
+    } finally {
+      if (mounted) {
+        // setState(() => _isLoadingCustomerInfo = false);
+      }
+    }
+  }
 
   @override
   void dispose() {

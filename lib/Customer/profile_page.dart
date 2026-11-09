@@ -28,7 +28,7 @@ class ProfilePage extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Mon profil',
+                'Souscription',
                 style: TextStyle(
                   color: green,
                   fontSize: 27,
@@ -37,62 +37,61 @@ class ProfilePage extends StatelessWidget {
               ),
               const SizedBox(height: 5),
               const Text(
-                'Gérez votre compte Foodly',
+                'Devenir un restaurateur chez Foodly',
                 style: TextStyle(color: Colors.black54, fontSize: 13),
               ),
               const SizedBox(height: 25),
 
               // Carte du profil
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 66,
-                      height: 66,
-                      decoration: BoxDecoration(
-                        color: orange.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(22),
-                      ),
-                      child: const Icon(
-                        Icons.person_rounded,
-                        color: orange,
-                        size: 35,
-                      ),
-                    ),
-                    const SizedBox(width: 15),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Bienvenue sur Foodly',
-                            style: TextStyle(
-                              color: green,
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          SizedBox(height: 6),
-                          Text(
-                            'Votre espace personnel',
-                            style: TextStyle(
-                              color: Colors.black54,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(Icons.chevron_right_rounded, color: Colors.grey),
-                  ],
-                ),
-              ),
-
+              // Container(
+              //   padding: const EdgeInsets.all(20),
+              //   decoration: BoxDecoration(
+              //     color: Colors.white,
+              //     borderRadius: BorderRadius.circular(24),
+              //   ),
+              //   child: Row(
+              //     children: [
+              //       Container(
+              //         width: 66,
+              //         height: 66,
+              //         decoration: BoxDecoration(
+              //           color: orange.withValues(alpha: 0.12),
+              //           borderRadius: BorderRadius.circular(22),
+              //         ),
+              //         child: const Icon(
+              //           Icons.person_rounded,
+              //           color: orange,
+              //           size: 35,
+              //         ),
+              //       ),
+              //       const SizedBox(width: 15),
+              //       const Expanded(
+              //         child: Column(
+              //           crossAxisAlignment: CrossAxisAlignment.start,
+              //           children: [
+              //             Text(
+              //               'Bienvenue sur Foodly',
+              //               style: TextStyle(
+              //                 color: green,
+              //                 fontSize: 17,
+              //                 fontWeight: FontWeight.bold,
+              //               ),
+              //             ),
+              //             SizedBox(height: 6),
+              //             Text(
+              //               'Votre espace personnel',
+              //               style: TextStyle(
+              //                 color: Colors.black54,
+              //                 fontSize: 12,
+              //               ),
+              //             ),
+              //           ],
+              //         ),
+              //       ),
+              //       const Icon(Icons.chevron_right_rounded, color: Colors.grey),
+              //     ],
+              //   ),
+              // ),
               const SizedBox(height: 28),
               // Devenir restaurateur
               Container(

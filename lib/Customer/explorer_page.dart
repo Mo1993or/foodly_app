@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:foodly/Customer/food_detail_page.dart';
+import 'package:foodly/Customer/food_detail_screen.dart';
+import 'package:foodly/model/dishes_model.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
+
+import 'package:foodly/model/restaurant_model.dart';
+import 'package:foodly/service/restaurant_service.dart';
 
 const Color foodlyOrange = Color(0xFFF56624);
 const Color foodlyGreen = Color(0xFF173D32);
@@ -15,106 +21,147 @@ class ExploreScreen extends StatefulWidget {
 
 class _ExploreScreenState extends State<ExploreScreen> {
   GoogleMapController? _mapController;
-  Position? _currentPosition;
 
-  bool _loadingLocation = false;
-  String? _locationError;
-  String _selectedCategory = 'Tous';
+  Position? _currentPosition;
 
   final TextEditingController _searchController = TextEditingController();
 
+  final RestaurantService _restaurantService = RestaurantService();
+
+  List<RestaurantModel> _restaurants = [];
+
+  bool _loadingLocation = false;
+  bool _isLoadingRestaurants = true;
+
+  String? _locationError;
+  String? _restaurantError;
+
+  String _selectedCategory = 'Tous';
   String _searchQuery = '';
 
-  final List<Map<String, dynamic>> _restaurants = [
-    {
-      'id': 'restaurant_1',
-      'name': 'Chez Awa',
-      'category': 'Sénégalais',
-      'rating': 4.7,
-      'latitude': 14.6928,
-      'longitude': -17.4467,
-      'description': 'Cuisine sénégalaise traditionnelle',
-    },
-    {
-      'id': 'restaurant_2',
-      'name': 'Le Gourmet',
-      'category': 'Fast-food',
-      'rating': 4.5,
-      'latitude': 14.6995,
-      'longitude': -17.4570,
-      'description': 'Burgers et repas rapides',
-    },
-    {
-      'id': 'restaurant_3',
-      'name': 'Saveurs du Terroir',
-      'category': 'Sénégalais',
-      'rating': 4.8,
-      'latitude': 14.6810,
-      'longitude': -17.4520,
-      'description': 'Des plats locaux faits maison',
-    },
-    {
-      'id': 'restaurant_4',
-      'name': 'Pizza House',
-      'category': 'Pizza',
-      'rating': 4.4,
-      'latitude': 14.7050,
-      'longitude': -17.4400,
-      'description': 'Pizzas et spécialités italiennes',
-    },
-  ];
+  static const LatLng _dakarPosition = LatLng(14.6928, -17.4467);
 
-  final List<String> _categories = ['Tous', 'Sénégalais', 'Fast-food', 'Pizza'];
+  // --------------------------------------------------
+  // INITIALISATION
+  // --------------------------------------------------
 
-  // Recherche par nom, catégorie ou description,
-  // combinée avec le filtre de catégorie sélectionné.
-  List<Map<String, dynamic>> get _filteredRestaurants {
+  @override
+  void initState() {
+    super.initState();
+
+    _fetchRestaurants();
+    _fetchDishes();
+    _getCurrentLocation();
+  }
+
+  // --------------------------------------------------
+  // CHARGEMENT DES RESTAURANTS DEPUIS L'API
+  // --------------------------------------------------
+
+  Future<void> _fetchRestaurants() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isLoadingRestaurants = true;
+      _restaurantError = null;
+    });
+
+    try {
+      final result = await _restaurantService.fetchRestaurants();
+
+      if (!mounted) return;
+
+      setState(() {
+        _restaurants = result;
+        _isLoadingRestaurants = false;
+      });
+
+      debugPrint('Explorer : ${_restaurants.length} restaurants chargés');
+    } catch (error) {
+      debugPrint('Erreur chargement restaurants : $error');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingRestaurants = false;
+        _restaurantError = 'Impossible de charger les restaurants.';
+      });
+    }
+  }
+
+  // --------------------------------------------------
+  // CATÉGORIES DYNAMIQUES
+  // --------------------------------------------------
+
+  List<String> get _categories {
+    final categories = _restaurants
+        .map((restaurant) => restaurant.restaurantType.trim())
+        .where((category) => category.isNotEmpty)
+        .toSet()
+        .toList();
+
+    categories.sort();
+
+    return ['Tous', ...categories];
+  }
+
+  // --------------------------------------------------
+  // FILTRAGE ET RECHERCHE
+  // --------------------------------------------------
+
+  List<RestaurantModel> get _filteredRestaurants {
     final query = _searchQuery.trim().toLowerCase();
 
     return _restaurants.where((restaurant) {
       final categoryMatches =
           _selectedCategory == 'Tous' ||
-          restaurant['category'] == _selectedCategory;
-
-      final name = restaurant['name'].toString().toLowerCase();
-      final category = restaurant['category'].toString().toLowerCase();
-      final description = restaurant['description'].toString().toLowerCase();
+          restaurant.restaurantType == _selectedCategory;
 
       final searchMatches =
           query.isEmpty ||
-          name.contains(query) ||
-          category.contains(query) ||
-          description.contains(query);
+          restaurant.name.toLowerCase().contains(query) ||
+          restaurant.restaurantType.toLowerCase().contains(query) ||
+          restaurant.address.toLowerCase().contains(query) ||
+          restaurant.description.toLowerCase().contains(query);
 
       return categoryMatches && searchMatches;
     }).toList();
   }
 
+  // --------------------------------------------------
+  // MARQUEURS GOOGLE MAPS
+  // --------------------------------------------------
+
   Set<Marker> get _markers {
-    return _filteredRestaurants.map((restaurant) {
-      final id = restaurant['id'].toString();
-
-      return Marker(
-        markerId: MarkerId(id),
-        position: LatLng(
-          (restaurant['latitude'] as num).toDouble(),
-          (restaurant['longitude'] as num).toDouble(),
-        ),
-        infoWindow: InfoWindow(
-          title: restaurant['name'].toString(),
-          snippet: restaurant['description'].toString(),
-        ),
-        icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueOrange),
-        onTap: () => _showRestaurant(restaurant),
-      );
-    }).toSet();
+    return _filteredRestaurants
+        .where((restaurant) {
+          return restaurant.latitude != 0 &&
+              restaurant.longitude != 0 &&
+              restaurant.latitude >= -90 &&
+              restaurant.latitude <= 90 &&
+              restaurant.longitude >= -180 &&
+              restaurant.longitude <= 180;
+        })
+        .map((restaurant) {
+          return Marker(
+            markerId: MarkerId(restaurant.id),
+            position: LatLng(restaurant.latitude, restaurant.longitude),
+            infoWindow: InfoWindow(
+              title: restaurant.name,
+              snippet: restaurant.address,
+            ),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueOrange,
+            ),
+            onTap: () => _showRestaurant(restaurant),
+          );
+        })
+        .toSet();
   }
 
-  @override
-  void initState() {
-    super.initState();
-    _getCurrentLocation();
-  }
+  // --------------------------------------------------
+  // GÉOLOCALISATION
+  // --------------------------------------------------
 
   Future<void> _getCurrentLocation() async {
     if (_loadingLocation) return;
@@ -174,10 +221,16 @@ class _ExploreScreenState extends State<ExploreScreen> {
       });
     } finally {
       if (mounted) {
-        setState(() => _loadingLocation = false);
+        setState(() {
+          _loadingLocation = false;
+        });
       }
     }
   }
+
+  // --------------------------------------------------
+  // RECHERCHE
+  // --------------------------------------------------
 
   void _onSearchChanged(String value) {
     setState(() {
@@ -193,26 +246,52 @@ class _ExploreScreenState extends State<ExploreScreen> {
     });
   }
 
-  Future<void> _moveToRestaurant(Map<String, dynamic> restaurant) async {
+  List<DishesModel> _dishes = [];
+  Future<void> _fetchDishes() async {
+    try {
+      final result = await _restaurantService.fetchDishes(idRestaurants: "");
+
+      if (!mounted) return;
+
+      setState(() {
+        _dishes = result;
+      });
+    } catch (error) {
+      debugPrint('Erreur chargement des plats : $error');
+    }
+  }
+  // --------------------------------------------------
+  // DÉPLACEMENT VERS UN RESTAURANT
+  // --------------------------------------------------
+
+  Future<void> _moveToRestaurant(RestaurantModel restaurant) async {
+    if (restaurant.latitude == 0 || restaurant.longitude == 0) {
+      _showRestaurant(restaurant);
+      return;
+    }
+
     await _mapController?.animateCamera(
       CameraUpdate.newLatLngZoom(
-        LatLng(
-          (restaurant['latitude'] as num).toDouble(),
-          (restaurant['longitude'] as num).toDouble(),
-        ),
+        LatLng(restaurant.latitude, restaurant.longitude),
         16,
       ),
     );
 
     if (!mounted) return;
+
     _showRestaurant(restaurant);
   }
 
-  void _showRestaurant(Map<String, dynamic> restaurant) {
+  // --------------------------------------------------
+  // DÉTAIL DU RESTAURANT
+  // --------------------------------------------------
+
+  void _showRestaurant(RestaurantModel restaurant) {
     showModalBottomSheet<void>(
       context: context,
       showDragHandle: true,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       builder: (sheetContext) {
         return Padding(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
@@ -220,41 +299,126 @@ class _ExploreScreenState extends State<ExploreScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                restaurant['name'].toString(),
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  color: foodlyGreen,
-                ),
+              Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: SizedBox(
+                      width: 65,
+                      height: 65,
+                      child: restaurant.logoUrl.isNotEmpty
+                          ? Image.network(
+                              restaurant.logoUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) {
+                                return _restaurantPlaceholder();
+                              },
+                            )
+                          : _restaurantPlaceholder(),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          restaurant.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 21,
+                            fontWeight: FontWeight.bold,
+                            color: foodlyGreen,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          restaurant.restaurantType,
+                          style: const TextStyle(color: Colors.black54),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
-              Text(restaurant['description'].toString()),
-              const SizedBox(height: 10),
+
+              const SizedBox(height: 16),
+
+              Text(
+                restaurant.description.isNotEmpty
+                    ? restaurant.description
+                    : 'Découvrez les spécialités de ce restaurant.',
+                style: const TextStyle(fontSize: 14, color: Colors.black87),
+              ),
+
+              const SizedBox(height: 12),
+
+              if (restaurant.address.isNotEmpty)
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.location_on_outlined,
+                      color: foodlyOrange,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 7),
+                    Expanded(
+                      child: Text(
+                        restaurant.address,
+                        style: const TextStyle(color: Colors.black54),
+                      ),
+                    ),
+                  ],
+                ),
+
+              const SizedBox(height: 12),
+
               Row(
                 children: [
                   const Icon(Icons.star_rounded, color: Colors.amber),
                   const SizedBox(width: 5),
-                  Text('${restaurant['rating']}'),
-                  const SizedBox(width: 12),
                   Text(
-                    restaurant['category'].toString(),
-                    style: const TextStyle(color: Colors.black54),
+                    restaurant.reviewNote.isNotEmpty
+                        ? restaurant.reviewNote
+                        : 'Nouveau',
+                  ),
+                  const Spacer(),
+                  Icon(
+                    restaurant.isOpen ? Icons.circle : Icons.circle_outlined,
+                    color: restaurant.isOpen ? Colors.green : Colors.grey,
+                    size: 10,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    restaurant.isOpen ? 'Ouvert' : 'Fermé',
+                    style: TextStyle(
+                      color: restaurant.isOpen ? Colors.green : Colors.grey,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
+
               const SizedBox(height: 20),
+
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.pop(sheetContext);
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Restaurant sélectionné : '
-                          '${restaurant['name']}',
+                    final restaurantDishes = _dishes.where((dish) {
+                      return dish.restaurant?.name == restaurant.name;
+                    }).toList();
+
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => RestaurantDetailScreen(
+                          restaurant: restaurant,
+                          dishes: restaurantDishes,
                         ),
                       ),
                     );
@@ -263,8 +427,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     backgroundColor: foodlyOrange,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
-                  child: const Text('Voir le restaurant'),
+                  child: const Text(
+                    'Voir le restaurant',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
                 ),
               ),
             ],
@@ -274,6 +444,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
     );
   }
 
+  Widget _restaurantPlaceholder() {
+    return Container(
+      color: foodlyBackground,
+      child: const Icon(Icons.restaurant, color: foodlyOrange, size: 30),
+    );
+  }
+
+  // --------------------------------------------------
+  // DISPOSE
+  // --------------------------------------------------
+
   @override
   void dispose() {
     _searchController.dispose();
@@ -281,10 +462,14 @@ class _ExploreScreenState extends State<ExploreScreen> {
     super.dispose();
   }
 
+  // --------------------------------------------------
+  // INTERFACE
+  // --------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     final initialPosition = _currentPosition == null
-        ? const LatLng(14.6928, -17.4467)
+        ? _dakarPosition
         : LatLng(_currentPosition!.latitude, _currentPosition!.longitude);
 
     final restaurants = _filteredRestaurants;
@@ -294,7 +479,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            // En-tête
+            // EN-TÊTE
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
               child: Row(
@@ -341,7 +526,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
             ),
 
-            // Champ de recherche
+            // RECHERCHE
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
               child: TextField(
@@ -390,7 +575,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
             ),
 
-            // Filtres par catégorie
+            // CATÉGORIES
             SizedBox(
               height: 45,
               child: ListView.separated(
@@ -423,7 +608,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
             const SizedBox(height: 12),
 
-            // Carte Google Maps avec marqueurs filtrés
+            // GOOGLE MAPS
             Expanded(
               flex: 5,
               child: ClipRRect(
@@ -460,17 +645,17 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
             ),
 
-            // Erreur de géolocalisation
-            if (_locationError != null)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
-                child: Text(
-                  _locationError!,
-                  style: const TextStyle(color: Colors.red, fontSize: 12),
-                ),
-              ),
+            // ERREUR DE LOCALISATION
+            // if (_locationError != null)
+            //   Padding(
+            //     padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            //     child: Text(
+            //       _locationError!,
+            //       style: const TextStyle(color: Colors.red, fontSize: 12),
+            //     ),
+            //   ),
 
-            // Titre et nombre de résultats
+            // TITRE DES RÉSULTATS
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
               child: Row(
@@ -494,10 +679,40 @@ class _ExploreScreenState extends State<ExploreScreen> {
               ),
             ),
 
-            // Résultats de recherche
+            // LISTE DES RESTAURANTS
             SizedBox(
               height: 130,
-              child: restaurants.isEmpty
+              child: _isLoadingRestaurants
+                  ? const Center(
+                      child: CircularProgressIndicator(color: foodlyOrange),
+                    )
+                  : _restaurantError != null
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              _restaurantError!,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 13,
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: _fetchRestaurants,
+                              child: const Text(
+                                'Réessayer',
+                                style: TextStyle(color: foodlyOrange),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : restaurants.isEmpty
                   ? Center(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -511,8 +726,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              'Aucun restaurant trouvé'
-                              '${_searchQuery.isNotEmpty ? ' pour « $_searchQuery »' : ''}.',
+                              _searchQuery.isNotEmpty
+                                  ? 'Aucun restaurant trouvé pour « $_searchQuery ».'
+                                  : 'Aucun restaurant disponible.',
                               textAlign: TextAlign.center,
                               style: const TextStyle(
                                 color: Colors.black54,
@@ -545,7 +761,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  restaurant['name'].toString(),
+                                  restaurant.name,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
@@ -556,7 +772,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                 ),
                                 const SizedBox(height: 7),
                                 Text(
-                                  restaurant['category'].toString(),
+                                  restaurant.restaurantType,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(color: Colors.black54),
                                 ),
                                 const Spacer(),
@@ -568,7 +786,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                       size: 19,
                                     ),
                                     const SizedBox(width: 4),
-                                    Text('${restaurant['rating']}'),
+                                    Text(
+                                      restaurant.reviewNote.isNotEmpty
+                                          ? restaurant.reviewNote
+                                          : 'Nouveau',
+                                    ),
                                     const Spacer(),
                                     const Icon(
                                       Icons.location_on_outlined,
