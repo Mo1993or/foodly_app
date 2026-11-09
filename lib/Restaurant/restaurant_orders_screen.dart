@@ -7,6 +7,7 @@ import 'package:foodly/service/order_service.dart';
 
 class RestaurantOrdersScreen extends StatefulWidget {
   const RestaurantOrdersScreen({super.key, required this.restaurant});
+
   final RestaurantModel? restaurant;
 
   @override
@@ -25,55 +26,192 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
     'Terminée',
     'Refusée',
   ];
-  bool _isLoading = false;
-  var statusTranslate = "";
-
-  _checkStatus(String status) {
-    setState(() {
-      switch (status) {
-        case "PENDING":
-          statusTranslate = "En attente";
-          break;
-        case "CONFIRMED":
-          statusTranslate = "Acceptée";
-        case "PREPARING":
-          statusTranslate = "En préparation";
-        case "READY":
-          statusTranslate = "Prête";
-        case "DELIVERED":
-          statusTranslate = "Terminée";
-        case "CANCELLED":
-          statusTranslate = "Refusée";
-        default:
-      }
-    });
-  }
 
   List<OrderModel> listOrders = [];
-  _fetchOrder() async {
-    try {
-      await OrdersService()
-          .fetchOrders(idRestaurants: widget.restaurant?.id ?? "")
-          .then(
-            (value) => {
-              setState(() {
-                listOrders = value;
-                for (var item in listOrders) {
-                  _checkStatus(item.status);
-                }
-              }),
-            },
-          );
-    } catch (e) {
-      print("error $e");
-    }
-  }
+
+  final Set<String> _updatingOrderIds = {};
+
+  bool _isLoading = true;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _fetchOrder();
+  }
+
+  // Traduction du statut de chaque commande.
+  String _checkStatus(String status) {
+    switch (status.trim().toUpperCase()) {
+      case 'PENDING':
+        return 'En attente';
+
+      case 'CONFIRMED':
+        return 'Acceptée';
+
+      case 'PREPARING':
+        return 'En préparation';
+
+      case 'READY':
+        return 'Prête';
+
+      case 'DELIVERED':
+      case 'COMPLETED':
+        return 'Terminée';
+
+      case 'CANCELLED':
+      case 'REJECTED':
+        return 'Refusée';
+
+      default:
+        return status;
+    }
+  }
+
+  // Récupération des commandes.
+  Future<void> _fetchOrder() async {
+    try {
+      final orders = await OrdersService().fetchOrders(
+        idRestaurants: widget.restaurant?.id ?? '',
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        listOrders = orders;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Erreur récupération commandes : $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Impossible de charger les commandes.')),
+      );
+    }
+  }
+
+  // Modification d'une seule commande grâce à son ID.
+  Future<void> _updateOrder(OrderModel order, String newStatus) async {
+    if (_updatingOrderIds.contains(order.id)) return;
+
+    setState(() {
+      _updatingOrderIds.add(order.id);
+    });
+
+    try {
+      await OrdersService().updateOrders(order.id, newStatus);
+
+      await _fetchOrder();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Commande mise à jour avec succès.'),
+          backgroundColor: foodlyGreen,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Erreur modification commande ${order.id} : $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossible de modifier cette commande.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _updatingOrderIds.remove(order.id);
+        });
+      }
+    }
+  }
+
+  // Confirmation d'une action.
+  Future<void> _confirmStatus(
+    OrderModel order, {
+    required String action,
+    required String newStatus,
+  }) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text('$action la commande ?'),
+          content: Text(
+            'Voulez-vous vraiment ${action.toLowerCase()} '
+            'la commande ${order.id} ?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, false);
+              },
+              child: const Text('Annuler'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext, true);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: newStatus == 'CANCELLED'
+                    ? Colors.red
+                    : foodlyGreen,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Confirmer'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == true && mounted) {
+      await _updateOrder(order, newStatus);
+    }
+  }
+
+  // Prochaine étape du statut.
+  String? _nextStatus(String status) {
+    switch (status) {
+      case 'Acceptée':
+        return 'En préparation';
+
+      case 'En préparation':
+        return 'Prête';
+
+      case 'Prête':
+        return 'Terminée';
+
+      default:
+        return null;
+    }
+  }
+
+  // Code envoyé au backend.
+  String? _nextStatusCode(String status) {
+    switch (status) {
+      case 'Acceptée':
+        return 'PREPARING';
+
+      case 'En préparation':
+        return 'READY';
+
+      case 'Prête':
+        return 'DELIVERED';
+
+      default:
+        return null;
+    }
   }
 
   @override
@@ -81,9 +219,11 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
     return AnimatedBuilder(
       animation: restaurantData,
       builder: (context, _) {
+        // Chaque commande utilise son propre statut.
         final orders = listOrders.reversed.where((order) {
-          //  _checkStatus(order.status);
-          return _filter == 'Toutes' || statusTranslate == _filter;
+          final orderStatus = _checkStatus(order.status);
+
+          return _filter == 'Toutes' || orderStatus == _filter;
         }).toList();
 
         return Scaffold(
@@ -96,6 +236,12 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
               'Mes commandes',
               style: TextStyle(color: foodlyGreen, fontWeight: FontWeight.bold),
             ),
+            actions: [
+              IconButton(
+                onPressed: _isLoading ? null : _fetchOrder,
+                icon: const Icon(Icons.refresh, color: foodlyGreen),
+              ),
+            ],
           ),
           body: Column(
             children: [
@@ -120,15 +266,23 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                       onSelected: (_) {
-                        setState(() => _filter = filter);
+                        setState(() {
+                          _filter = filter;
+                        });
                       },
                     );
                   },
                 ),
               ),
+
               const SizedBox(height: 12),
+
               Expanded(
-                child: orders.isEmpty
+                child: _isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(color: foodlyGreen),
+                      )
+                    : orders.isEmpty
                     ? const Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -143,11 +297,16 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                           ],
                         ),
                       )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: orders.length,
-                        itemBuilder: (context, index) =>
-                            _orderCard(context, orders[index]),
+                    : RefreshIndicator(
+                        color: foodlyGreen,
+                        onRefresh: _fetchOrder,
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(16),
+                          itemCount: orders.length,
+                          itemBuilder: (context, index) {
+                            return _orderCard(context, orders[index]);
+                          },
+                        ),
                       ),
               ),
             ],
@@ -157,7 +316,16 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
     );
   }
 
+  // Carte individuelle de commande.
   Widget _orderCard(BuildContext context, OrderModel order) {
+    // IMPORTANT : statut propre à cette commande.
+    final orderStatus = _checkStatus(order.status);
+
+    final isUpdating = _updatingOrderIds.contains(order.id);
+
+    final nextStatus = _nextStatus(orderStatus);
+    final nextStatusCode = _nextStatusCode(orderStatus);
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
@@ -180,27 +348,37 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                   ),
                 ),
               ),
-              _statusBadge(statusTranslate),
+              _statusBadge(orderStatus),
             ],
           ),
+
           const SizedBox(height: 12),
-          for (CartModel element in order.item ?? []) ...{
-            Text(
-              element.name,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+
+          for (final element in order.item ?? [])
+            Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: Text(
+                element.name,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
-          },
+
           const SizedBox(height: 5),
+
           Text(
-            '${order.item?.length} ligne(s) de commande',
+            '${order.item?.length ?? 0} ligne(s) de commande',
             style: const TextStyle(color: Colors.grey),
           ),
+
           const SizedBox(height: 5),
+
           Text(
-            order.customer?.address ?? "",
+            order.customer?.address ?? '',
             style: const TextStyle(color: Colors.grey),
           ),
+
           const SizedBox(height: 12),
+
           Row(
             children: [
               Expanded(
@@ -213,6 +391,7 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                   ),
                 ),
               ),
+
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -220,10 +399,12 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                     MaterialPageRoute(
                       builder: (_) => RestaurantOrderDetailScreen(
                         order: order,
-                        statusTranslate: statusTranslate,
+                        statusTranslate: orderStatus,
                       ),
                     ),
-                  );
+                  ).then((_) {
+                    _fetchOrder();
+                  });
                 },
                 child: const Text(
                   'Détails',
@@ -232,14 +413,22 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
               ),
             ],
           ),
-          if (statusTranslate == 'En attente') ...[
+
+          // Commande en attente.
+          if (orderStatus == 'En attente') ...[
             const SizedBox(height: 8),
+
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () =>
-                        _confirmStatus(context, order, 'Refusée', "CANCELLED"),
+                    onPressed: isUpdating
+                        ? null
+                        : () => _confirmStatus(
+                            order,
+                            action: 'Refuser',
+                            newStatus: 'CANCELLED',
+                          ),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red,
                       side: const BorderSide(color: Colors.red),
@@ -247,15 +436,18 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                     child: const Text('Refuser'),
                   ),
                 ),
+
                 const SizedBox(width: 10),
+
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () => _confirmStatus(
-                      context,
-                      order,
-                      statusTranslate,
-                      order.status,
-                    ),
+                    onPressed: isUpdating
+                        ? null
+                        : () => _confirmStatus(
+                            order,
+                            action: 'Accepter',
+                            newStatus: 'CONFIRMED',
+                          ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: foodlyOrange,
                       foregroundColor: Colors.white,
@@ -265,74 +457,22 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                 ),
               ],
             ),
-          ] else if (_nextStatus(statusTranslate) != null) ...[
+          ]
+          // Progression des commandes acceptées.
+          else if (nextStatus != null && nextStatusCode != null) ...[
             const SizedBox(height: 8),
+
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () async {
-                  try {
-                    setState(() {
-                      _isLoading = true;
-                    });
-                    switch (statusTranslate) {
-                      case 'Acceptée':
-                        await OrdersService().updateOrders(
-                          order.id,
-                          "PREPARING",
-                        );
-                        await _fetchOrder();
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      case 'En préparation':
-                        await OrdersService().updateOrders(order.id, "READY");
-                        await _fetchOrder();
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      case 'En attente':
-                        await OrdersService().updateOrders(
-                          order.id,
-                          "CONFIRMED",
-                        );
-                        await _fetchOrder();
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      case 'Prête':
-                        await OrdersService().updateOrders(
-                          order.id,
-                          "DELIVERED",
-                        );
-                        await _fetchOrder();
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      default:
-                        await OrdersService().updateOrders(
-                          order.id,
-                          "CANCELLED",
-                        );
-                        await _fetchOrder();
-                        setState(() {
-                          _isLoading = false;
-                        });
-                    }
-                  } catch (e) {
-                    print("error $e");
-                  }
-                  // restaurantData.updateOrderStatus(
-                  //   order.id,
-                  //   _nextStatus(statusTranslate)!,
-                  // );
-                },
-
+                onPressed: isUpdating
+                    ? null
+                    : () => _updateOrder(order, nextStatusCode),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: foodlyGreen,
                   foregroundColor: Colors.white,
                 ),
-                child: _isLoading
+                child: isUpdating
                     ? const SizedBox(
                         width: 23,
                         height: 23,
@@ -341,7 +481,7 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : Text('Passer à : ${_nextStatus(statusTranslate)}'),
+                    : Text('Passer à : $nextStatus'),
               ),
             ),
           ],
@@ -350,102 +490,28 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
     );
   }
 
-  String? _nextStatus(String status) {
-    switch (status) {
-      case 'Acceptée':
-        return 'En préparation';
-      case 'En préparation':
-        return 'Prête';
-      case 'Prête':
-        return 'Terminée';
-      default:
-        return null;
-    }
-  }
-
-  Future<void> _confirmStatus(
-    BuildContext context,
-    OrderModel order,
-    String status,
-    String backStatus,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text('$status la commande ?'),
-        content: Text(
-          'Voulez-vous vraiment ${status.toLowerCase()} ${order.id} ?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () async {
-              try {
-                setState(() {
-                  _isLoading = true;
-                });
-
-                await OrdersService().updateOrders(order.id, "CANCELLED");
-                await _fetchOrder();
-                setState(() {
-                  _isLoading = false;
-                });
-                Navigator.pop(dialogContext, true);
-              } catch (e) {
-                print("error $e");
-                setState(() {
-                  _isLoading = false;
-                });
-                Navigator.pop(dialogContext, true);
-              }
-            },
-            child: const Text('Annuler'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              try {
-                setState(() {
-                  _isLoading = true;
-                });
-                await OrdersService().updateOrders(order.id, "CONFIRMED");
-                await _fetchOrder();
-                setState(() {
-                  _isLoading = false;
-                });
-                Navigator.pop(dialogContext, true);
-              } catch (e) {
-                print("error $e");
-                setState(() {
-                  _isLoading = false;
-                });
-                Navigator.pop(dialogContext, true);
-              }
-            },
-            child: const Text('Confirmer'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true) {
-      restaurantData.updateOrderStatus(order.id, status);
-    }
-  }
-
+  // Badge de statut.
   Widget _statusBadge(String status) {
     Color color;
 
     switch (status) {
       case 'Terminée':
-      case 'Livrée':
         color = Colors.green;
         break;
+
       case 'Refusée':
         color = Colors.red;
         break;
+
       case 'En préparation':
       case 'Prête':
         color = Colors.deepPurple;
         break;
+
+      case 'Acceptée':
+        color = foodlyGreen;
+        break;
+
       default:
         color = foodlyOrange;
     }
