@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:foodly/Utils/network.dart';
+import 'package:foodly/model/dashboard_model.dart';
 import 'package:foodly/model/dishes_model.dart';
 import 'package:foodly/model/offer_model.dart';
 import 'package:foodly/model/restaurant_model.dart';
@@ -189,6 +190,33 @@ class RestaurantService {
         );
         print(" list subscription $listOffers");
         return listOffers;
+      } else {
+        final errorMessage = responseData['message'];
+        throw Exception('$errorMessage');
+      }
+    } catch (e) {
+      throw Exception('$e');
+    }
+  }
+
+  Future<RestaurantDashboardModel> fetchDashBoard(String idRestaurant) async {
+    await _readToken();
+
+    try {
+      final response = await http.get(
+        Uri.parse('$apiUrl/orders/restaurant/$idRestaurant/dashboard'),
+        headers: await _headersAuth(token),
+      );
+      print('response.body dd : ${response.body}');
+      final responseData = json.decode(response.body);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        print("object  ${responseData}");
+        final dashboard = RestaurantDashboardModel.fromJson(
+          responseData['data'],
+        );
+        print(" dashboard $dashboard");
+        return dashboard;
       } else {
         final errorMessage = responseData['message'];
         throw Exception('$errorMessage');

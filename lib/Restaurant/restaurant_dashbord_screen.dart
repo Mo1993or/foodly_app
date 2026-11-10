@@ -5,10 +5,12 @@ import 'package:foodly/Restaurant/restaurant_offer_screen.dart';
 import 'package:foodly/Restaurant/restaurant_profil_screen.dart';
 import 'package:foodly/Restaurant/retaurant_data.dart';
 import 'package:foodly/Utils/network.dart';
+import 'package:foodly/model/dashboard_model.dart';
 import 'package:foodly/model/offer_model.dart';
 import 'package:foodly/model/restaurant_model.dart';
 import 'package:foodly/service/restaurant_service.dart';
 import 'package:url_launcher/url_launcher.dart';
+
 import 'restaurant_orders_screen.dart';
 import 'restaurant_menu_screen.dart';
 
@@ -16,8 +18,6 @@ class RestaurantDashboardScreen extends StatefulWidget {
   final String selectedOffer;
   final RestaurantModel? restaurant;
   final String statusPayment;
-
-  // Alerte de paiement
   final bool showPaymentAlert;
   final VoidCallback? onPayNow;
 
@@ -45,6 +45,13 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
   List<SubscriptionModel> listSub = [];
   String statusPayment = "";
 
+  RestaurantDashboardModel? dashBoard;
+  bool isDashboardLoading = true;
+
+  // ============================================================
+  // HISTORIQUE ABONNEMENT
+  // ============================================================
+
   Future<void> _fetchHistorySubscriptios() async {
     try {
       final value = await RestaurantService().historyMyOffer(
@@ -56,7 +63,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
       setState(() {
         listSub = value;
 
-        // Évite une erreur si aucun abonnement n'existe.
         if (widget.statusPayment.isNotEmpty) {
           statusPayment = widget.statusPayment;
         } else {
@@ -72,12 +78,49 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
     }
   }
 
+  // ============================================================
+  // DASHBOARD API
+  // ============================================================
+
+  Future<void> _fetchDashBoard() async {
+    try {
+      setState(() {
+        isDashboardLoading = true;
+      });
+
+      final value = await RestaurantService().fetchDashBoard(
+        widget.restaurant?.id ?? "",
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        dashBoard = value;
+        isDashboardLoading = false;
+      });
+
+      debugPrint("Dashboard chargé avec succès");
+      debugPrint("Total commandes : ${dashBoard?.totalOrders}");
+      debugPrint("Chiffre d'affaires : ${dashBoard?.totalRevenue}");
+    } catch (err) {
+      debugPrint("Erreur chargement dashboard : $err");
+
+      if (!mounted) return;
+
+      setState(() {
+        isDashboardLoading = false;
+      });
+    }
+  }
+
   @override
   void initState() {
     super.initState();
 
     restaurantData.addListener(_refresh);
+
     _fetchHistorySubscriptios();
+    _fetchDashBoard();
 
     debugPrint("restaurant ${widget.restaurant}");
   }
@@ -101,26 +144,53 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
         statusPayment == "pending_verification";
   }
 
-  bool get _isRejected {
-    return statusPayment == "rejected";
-  }
+  bool get _isRejected => statusPayment == "rejected";
 
-  bool get _isExpired {
-    return statusPayment == "expired";
-  }
+  bool get _isExpired => statusPayment == "expired";
 
   // ============================================================
   // NAVIGATION VERS LES OFFRES
   // ============================================================
 
-  void _openOffers() {
-    Navigator.push(
+  Future<void> _openOffers() async {
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => RestaurantOffersScreen(restaurant: widget.restaurant),
       ),
     );
   }
+
+  // ============================================================
+  // FORMATAGE
+  // ============================================================
+
+  String _formatAmount(num amount) {
+    return formatCfa(amount.round());
+  }
+
+  String _formatOrderStatus(String status) {
+    switch (status.toUpperCase()) {
+      case 'PENDING':
+        return 'En attente';
+      case 'CONFIRMED':
+        return 'Acceptée';
+      case 'PREPARING':
+        return 'En préparation';
+      case 'READY':
+        return 'Prête';
+      case 'DELIVERED':
+        return 'Livrée';
+      case 'CANCELLED':
+        return 'Annulée';
+      default:
+        return status;
+    }
+  }
+
+  // ============================================================
+  // BUILD
+  // ============================================================
 
   @override
   Widget build(BuildContext context) {
@@ -165,32 +235,22 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
     );
   }
 
+  // ============================================================
+  // ACCUEIL DASHBOARD
+  // ============================================================
+
   Widget _buildHome() {
-    final orders = restaurantData.orders;
     final dishes = restaurantData.dishes;
 
-    final pending = orders.where((o) => o.status == 'En attente').length;
+    // Données provenant de l'API.
+    final totalOrders = dashBoard?.totalOrders ?? 0;
+    final pending = dashBoard?.pendingOrders ?? 0;
+    final active = dashBoard?.activeOrders ?? 0;
+    final completed = dashBoard?.completedOrders ?? 0;
+    final revenue = dashBoard?.totalRevenue ?? 0;
+    final averageBasket = dashBoard?.averageBasket ?? 0;
 
-    final active = orders.where((o) {
-      return ['Acceptée', 'En préparation', 'Prête'].contains(o.status);
-    }).length;
-
-    final completedOrders = orders.where((o) {
-      return ['Terminée', 'Livrée'].contains(o.status);
-    }).toList();
-
-    final completed = completedOrders.length;
-
-    final revenue = completedOrders.fold<int>(
-      0,
-      (sum, order) => sum + order.total,
-    );
-
-    final averageBasket = orders.isEmpty
-        ? 0
-        : orders.fold<int>(0, (sum, order) => sum + order.total) ~/
-              orders.length;
-
+    // Données locales conservées pour le menu.
     final availableDishes = dishes.where((dish) => dish.isAvailable).length;
 
     return SingleChildScrollView(
@@ -202,7 +262,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
 
           const SizedBox(height: 18),
 
-          // Affichage automatique selon le statut de l'abonnement.
           if (_isPaymentPending)
             _buildPaymentAlert()
           else if (_isRejected)
@@ -221,95 +280,133 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
 
           const SizedBox(height: 14),
 
-          GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            crossAxisSpacing: 12,
-            mainAxisSpacing: 12,
-            childAspectRatio: 1.25,
-            children: [
-              _statCard(
-                'Commandes reçues',
-                '${orders.length}',
-                'Toutes les commandes',
-                Icons.receipt_long_rounded,
-                orange,
+          if (isDashboardLoading && dashBoard == null)
+            _buildDashboardLoading()
+          else
+            GridView.count(
+              crossAxisCount: 2,
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.25,
+              children: [
+                _statCard(
+                  'Commandes reçues',
+                  '$totalOrders',
+                  'Toutes les commandes',
+                  Icons.receipt_long_rounded,
+                  orange,
+                ),
+                _statCard(
+                  'En attente',
+                  '$pending',
+                  'À traiter',
+                  Icons.hourglass_top_rounded,
+                  const Color(0xFFE7A33E),
+                ),
+                _statCard(
+                  'En cours',
+                  '$active',
+                  'À préparer ou livrer',
+                  Icons.restaurant_rounded,
+                  const Color(0xFF4285F4),
+                ),
+                _statCard(
+                  'Terminées',
+                  '$completed',
+                  'Commandes finalisées',
+                  Icons.check_circle_rounded,
+                  const Color(0xFF2E8B57),
+                ),
+                _statCard(
+                  'Plats disponibles',
+                  '$availableDishes/${dishes.length}',
+                  'Plats actifs au menu',
+                  Icons.fastfood_rounded,
+                  green,
+                ),
+                _statCard(
+                  'Panier moyen',
+                  '${_formatAmount(averageBasket)} ',
+                  'Par commande',
+                  Icons.shopping_bag_rounded,
+                  const Color(0xFF8B5CF6),
+                ),
+              ],
+            ),
+
+          if (!isDashboardLoading && dashBoard == null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: _emptyCard(
+                'Impossible de charger les statistiques. Vérifiez votre connexion puis réessayez.',
               ),
-              _statCard(
-                'En attente',
-                '$pending',
-                'À traiter',
-                Icons.hourglass_top_rounded,
-                const Color(0xFFE7A33E),
-              ),
-              _statCard(
-                'En cours',
-                '$active',
-                'À préparer ou livrer',
-                Icons.restaurant_rounded,
-                const Color(0xFF4285F4),
-              ),
-              _statCard(
-                'Terminées',
-                '$completed',
-                'Commandes finalisées',
-                Icons.check_circle_rounded,
-                const Color(0xFF2E8B57),
-              ),
-              _statCard(
-                'Plats disponibles',
-                '$availableDishes/${dishes.length}',
-                'Plats actifs au menu',
-                Icons.fastfood_rounded,
-                green,
-              ),
-              _statCard(
-                'Panier moyen',
-                '${formatCfa(averageBasket)} F',
-                'Par commande',
-                Icons.shopping_bag_rounded,
-                const Color(0xFF8B5CF6),
-              ),
-            ],
-          ),
+            ),
 
           const SizedBox(height: 26),
-          _buildRevenueChart(revenue),
+
+          _buildRevenueChart(),
 
           const SizedBox(height: 26),
-          _buildOrderStatus(pending, active, completed),
+
+          _buildOrderStatus(),
 
           const SizedBox(height: 26),
+
           _buildRecentOrders(),
 
           const SizedBox(height: 26),
-          _buildMenuSummary(availableDishes, dishes.length),
 
-          const SizedBox(height: 20),
-          _buildRestaurantStatus(),
+          // _buildMenuSummary(availableDishes, dishes.length),
+
+          // const SizedBox(height: 20),
+
+          // _buildRestaurantStatus(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDashboardLoading() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 35),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(19),
+      ),
+      child: const Column(
+        children: [
+          CircularProgressIndicator(color: orange),
+          SizedBox(height: 12),
+          Text(
+            'Chargement des statistiques...',
+            style: TextStyle(color: Colors.grey, fontSize: 12),
+          ),
         ],
       ),
     );
   }
 
   // ============================================================
-  // ALERTE ABONNEMENT / PAIEMENT
+  // PAIEMENT
   // ============================================================
 
   Future<void> _launchPayment() async {
-    var url = apiUrlPayment;
+    final url = apiUrlPayment;
+    final uri = Uri.parse(url);
 
-    if (await canLaunch(url)) {
-      await launch(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
       throw 'Could not launch $url';
     }
   }
 
   Future<void> _makePhoneCall(String phoneNumber) async {
-    final String cleanNumber = phoneNumber.replaceAll(' ', '');
-    final Uri launchUri = Uri(scheme: 'tel', path: cleanNumber);
+    final cleanNumber = phoneNumber.replaceAll(' ', '');
+    final launchUri = Uri(scheme: 'tel', path: cleanNumber);
 
     if (await canLaunchUrl(launchUri)) {
       await launchUrl(launchUri);
@@ -320,7 +417,6 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
 
   Future<void> openWavePayment(BuildContext context) async {
     const paymentUrl = 'https://pay.wave.com/m/M_sn_snCiyi6_rFbh/c/sn/';
-
     final uri = Uri.parse(paymentUrl);
 
     try {
@@ -383,39 +479,17 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-            decoration: BoxDecoration(
-              color: orange,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'Offre ${widget.selectedOffer}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+          _offerBadge(),
           const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                width: 43,
-                height: 43,
-                decoration: BoxDecoration(
-                  color: orange.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Icon(
-                  isVerification
-                      ? Icons.hourglass_top_rounded
-                      : Icons.notifications_active_rounded,
-                  color: orange,
-                  size: 23,
-                ),
+              _alertIcon(
+                isVerification
+                    ? Icons.hourglass_top_rounded
+                    : Icons.notifications_active_rounded,
+                orange,
+                orange.withValues(alpha: 0.12),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -435,23 +509,8 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                             ),
                           ),
                         ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 9,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFFFE5D2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            isVerification ? 'Vérification' : 'En attente',
-                            style: const TextStyle(
-                              color: Color(0xFFB94A13),
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                        _smallStatusBadge(
+                          isVerification ? 'Vérification' : 'En attente',
                         ),
                       ],
                     ),
@@ -472,9 +531,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 13),
-
           Text(
             isVerification
                 ? 'Votre paiement a été signalé. Notre équipe procède actuellement à sa vérification pour activer votre abonnement.'
@@ -485,93 +542,33 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
               height: 1.55,
             ),
           ),
-
           if (!isVerification) ...[
             const SizedBox(height: 16),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () async {
-                  await openWavePayment(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: orange,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(13),
-                  ),
-                ),
-                child: const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.payment_rounded, size: 19),
-                    SizedBox(width: 9),
-                    Text(
-                      'Payer maintenant',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(width: 7),
-                    Icon(Icons.arrow_forward_rounded, size: 17),
-                  ],
-                ),
-              ),
+            _alertButton(
+              label: 'Payer maintenant',
+              icon: Icons.payment_rounded,
+              color: orange,
+              onPressed: () => openWavePayment(context),
             ),
           ],
-
           const SizedBox(height: 16),
-
-          !isVerification
-              ? const Text(
-                  'Si c’est déjà fait, appelez ce numéro pour valider votre offre : +221 77 312 31 89',
-                  style: TextStyle(
-                    color: Color(0xFF75685F),
-                    fontSize: 12,
-                    height: 1.55,
-                  ),
-                )
-              : Container(),
-
-          const SizedBox(height: 13),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () async {
-                await _makePhoneCall("+221773123189");
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: green,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(13),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.call, size: 19),
-                  SizedBox(width: 9),
-                  Text(
-                    'Appelez maintenant',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 7),
-                  Icon(Icons.arrow_forward_rounded, size: 17),
-                ],
+          if (!isVerification)
+            const Text(
+              'Si c’est déjà fait, appelez ce numéro pour valider votre offre : +221 77 312 31 89',
+              style: TextStyle(
+                color: Color(0xFF75685F),
+                fontSize: 12,
+                height: 1.55,
               ),
             ),
+          const SizedBox(height: 13),
+          _alertButton(
+            label: 'Appelez maintenant',
+            icon: Icons.call,
+            color: green,
+            onPressed: () => _makePhoneCall("+221773123189"),
           ),
-
           const SizedBox(height: 11),
-
           const Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -601,127 +598,16 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
   // ============================================================
 
   Widget _buildRejectedAlert() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF1ED),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFF3C5B9)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.red.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-            decoration: BoxDecoration(
-              color: orange,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'Offre ${widget.selectedOffer}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                width: 43,
-                height: 43,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFDE0D7),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: const Icon(
-                  Icons.error_outline_rounded,
-                  color: Color(0xFFD94B2B),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'DEMANDE REJETÉE',
-                      style: TextStyle(
-                        color: Color(0xFFD94B2B),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 1,
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    Text(
-                      'Votre offre a été rejetée',
-                      style: TextStyle(
-                        color: green,
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 14),
-
-          const Text(
-            'Votre précédente demande d’abonnement n’a pas été acceptée par notre équipe. Vous pouvez sélectionner une nouvelle offre et effectuer une nouvelle demande.',
-            style: TextStyle(
-              color: Color(0xFF79534B),
-              fontSize: 12,
-              height: 1.55,
-            ),
-          ),
-
-          const SizedBox(height: 17),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _openOffers,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: orange,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(13),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.local_offer_rounded, size: 19),
-                  SizedBox(width: 9),
-                  Text(
-                    'Choisir votre offre',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 7),
-                  Icon(Icons.arrow_forward_rounded, size: 17),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+    return _buildSubscriptionAlert(
+      icon: Icons.error_outline_rounded,
+      iconColor: const Color(0xFFD94B2B),
+      iconBackground: const Color(0xFFFDE0D7),
+      title: 'DEMANDE REJETÉE',
+      subtitle: 'Votre offre a été rejetée',
+      description:
+          'Votre précédente demande d’abonnement n’a pas été acceptée par notre équipe. Vous pouvez sélectionner une nouvelle offre et effectuer une nouvelle demande.',
+      buttonLabel: 'Choisir votre offre',
+      buttonIcon: Icons.local_offer_rounded,
     );
   }
 
@@ -730,6 +616,29 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
   // ============================================================
 
   Widget _buildExpiredAlert() {
+    return _buildSubscriptionAlert(
+      icon: Icons.access_time_rounded,
+      iconColor: const Color(0xFFB77916),
+      iconBackground: const Color(0xFFFFEDC2),
+      title: 'ABONNEMENT EXPIRÉ',
+      subtitle: 'Votre offre est arrivée à expiration',
+      description:
+          'Votre période d’abonnement est terminée. Pour continuer à profiter des fonctionnalités de Foodly Business et recevoir de nouvelles commandes, renouvelez votre abonnement.',
+      buttonLabel: 'Renouveler mon offre',
+      buttonIcon: Icons.autorenew_rounded,
+    );
+  }
+
+  Widget _buildSubscriptionAlert({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBackground,
+    required String title,
+    required String subtitle,
+    required String description,
+    required String buttonLabel,
+    required IconData buttonIcon,
+  }) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
@@ -737,66 +646,33 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
         color: const Color(0xFFFFF8E8),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFFF2D99C)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.orange.withValues(alpha: 0.04),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-            decoration: BoxDecoration(
-              color: orange,
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'Offre ${widget.selectedOffer}',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
+          _offerBadge(),
           const SizedBox(height: 12),
           Row(
             children: [
-              Container(
-                width: 43,
-                height: 43,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFEDC2),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: const Icon(
-                  Icons.access_time_rounded,
-                  color: Color(0xFFB77916),
-                  size: 24,
-                ),
-              ),
+              _alertIcon(icon, iconColor, iconBackground),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'ABONNEMENT EXPIRÉ',
+                      title,
                       style: TextStyle(
-                        color: Color(0xFFB77916),
+                        color: iconColor,
                         fontSize: 10,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 1,
                       ),
                     ),
-                    SizedBox(height: 5),
+                    const SizedBox(height: 5),
                     Text(
-                      'Votre offre est arrivée à expiration',
-                      style: TextStyle(
+                      subtitle,
+                      style: const TextStyle(
                         color: green,
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
@@ -807,49 +683,107 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
               ),
             ],
           ),
-
           const SizedBox(height: 14),
-
-          const Text(
-            'Votre période d’abonnement est terminée. Pour continuer à profiter des fonctionnalités de Foodly Business et recevoir de nouvelles commandes, renouvelez votre abonnement.',
-            style: TextStyle(
+          Text(
+            description,
+            style: const TextStyle(
               color: Color(0xFF806B48),
               fontSize: 12,
               height: 1.55,
             ),
           ),
-
           const SizedBox(height: 17),
-
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _openOffers,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: orange,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(13),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.autorenew_rounded, size: 20),
-                  SizedBox(width: 9),
-                  Text(
-                    'Renouveler mon offre',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(width: 7),
-                  Icon(Icons.arrow_forward_rounded, size: 17),
-                ],
-              ),
-            ),
+          _alertButton(
+            label: buttonLabel,
+            icon: buttonIcon,
+            color: orange,
+            onPressed: _openOffers,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _offerBadge() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: orange,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        'Offre ${widget.selectedOffer}',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _alertIcon(IconData icon, Color color, Color bg) {
+    return Container(
+      width: 43,
+      height: 43,
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(13),
+      ),
+      child: Icon(icon, color: color, size: 24),
+    );
+  }
+
+  Widget _smallStatusBadge(String label) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFE5D2),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: Color(0xFFB94A13),
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _alertButton({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required Future<void> Function() onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton(
+        onPressed: () async => onPressed(),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(13),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 19),
+            const SizedBox(width: 9),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(width: 7),
+            const Icon(Icons.arrow_forward_rounded, size: 17),
+          ],
+        ),
       ),
     );
   }
@@ -1083,13 +1017,23 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
   }
 
   // ============================================================
-  // CHIFFRE D'AFFAIRES
+  // CHIFFRE D'AFFAIRES - DONNÉES API
   // ============================================================
 
-  Widget _buildRevenueChart(int revenue) {
-    final values = <double>[12000, 18500, 15000, 24000, 21000, 32000, 27500];
+  Widget _buildRevenueChart() {
+    final weeklyData = dashBoard?.weeklyRevenue ?? [];
 
-    final maxValue = values.reduce((a, b) => a > b ? a : b);
+    final values = weeklyData.map((item) => item.revenue.toDouble()).toList();
+
+    final maxValue = values.isEmpty
+        ? 1000.0
+        : values.reduce((a, b) => a > b ? a : b);
+
+    // Évite un intervalle égal à zéro si toutes les valeurs sont nulles.
+    final chartMax = maxValue <= 0 ? 1000.0 : maxValue;
+    final interval = chartMax / 4;
+
+    final revenue = dashBoard?.totalRevenue ?? 0;
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -1115,7 +1059,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
           ),
           const SizedBox(height: 18),
           Text(
-            '${formatCfa(revenue)} FCFA',
+            '${_formatAmount(revenue)} ',
             style: const TextStyle(
               color: green,
               fontSize: 24,
@@ -1128,118 +1072,125 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
             style: TextStyle(color: Colors.grey, fontSize: 11),
           ),
           const SizedBox(height: 20),
-          SizedBox(
-            height: 190,
-            child: LineChart(
-              LineChartData(
-                minY: 0,
-                maxY: maxValue * 1.25,
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: maxValue / 4,
+          if (weeklyData.isEmpty)
+            const SizedBox(
+              height: 190,
+              child: Center(
+                child: Text(
+                  'Aucune donnée disponible pour le graphique.',
+                  style: TextStyle(color: Colors.grey, fontSize: 12),
                 ),
-                borderData: FlBorderData(show: false),
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+              ),
+            )
+          else
+            SizedBox(
+              height: 190,
+              child: LineChart(
+                LineChartData(
+                  minY: 0,
+                  maxY: chartMax * 1.25,
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: interval,
                   ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 38,
-                      interval: maxValue / 4,
-                      getTitlesWidget: (value, meta) => Text(
-                        '${(value / 1000).round()}k',
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 10,
+                  borderData: FlBorderData(show: false),
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 38,
+                        interval: interval,
+                        getTitlesWidget: (value, meta) => Text(
+                          '${(value / 1000).round()}k',
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 28,
-                      interval: 1,
-                      getTitlesWidget: (value, meta) {
-                        const days = [
-                          'Lun',
-                          'Mar',
-                          'Mer',
-                          'Jeu',
-                          'Ven',
-                          'Sam',
-                          'Dim',
-                        ];
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 28,
+                        interval: 1,
+                        getTitlesWidget: (value, meta) {
+                          final index = value.toInt();
 
-                        final index = value.toInt();
+                          if (index < 0 || index >= weeklyData.length) {
+                            return const SizedBox.shrink();
+                          }
 
-                        if (index < 0 || index >= days.length) {
-                          return const SizedBox.shrink();
-                        }
-
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            days[index],
-                            style: const TextStyle(
-                              color: Colors.grey,
-                              fontSize: 10,
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 8),
+                            child: Text(
+                              weeklyData[index].day,
+                              style: const TextStyle(
+                                color: Colors.grey,
+                                fontSize: 10,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (spots) {
+                        return spots.map((spot) {
+                          return LineTooltipItem(
+                            '${_formatAmount(spot.y)} ',
+                            const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                            ),
+                          );
+                        }).toList();
                       },
                     ),
                   ),
-                ),
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipItems: (spots) => spots.map((spot) {
-                      return LineTooltipItem(
-                        '${formatCfa(spot.y.toInt())} FCFA',
-                        const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 11,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: List.generate(
-                      values.length,
-                      (index) => FlSpot(index.toDouble(), values[index]),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: List.generate(
+                        values.length,
+                        (index) => FlSpot(index.toDouble(), values[index]),
+                      ),
+                      isCurved: true,
+                      color: orange,
+                      barWidth: 3,
+                      dotData: const FlDotData(show: true),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: orange.withValues(alpha: 0.12),
+                      ),
                     ),
-                    isCurved: true,
-                    color: orange,
-                    barWidth: 3,
-                    dotData: const FlDotData(show: true),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: orange.withValues(alpha: 0.12),
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
   }
 
   // ============================================================
-  // RÉPARTITION DES COMMANDES
+  // RÉPARTITION DES COMMANDES - DONNÉES API
   // ============================================================
 
-  Widget _buildOrderStatus(int pending, int active, int completed) {
+  Widget _buildOrderStatus() {
+    final pending = dashBoard?.orderDistribution.pending ?? 0;
+    final active = dashBoard?.orderDistribution.active ?? 0;
+    final completed = dashBoard?.orderDistribution.completed ?? 0;
+
     final total = pending + active + completed;
     final denominator = total == 0 ? 1 : total;
 
@@ -1327,11 +1278,11 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
   }
 
   // ============================================================
-  // COMMANDES RÉCENTES
+  // COMMANDES RÉCENTES - DONNÉES API
   // ============================================================
 
   Widget _buildRecentOrders() {
-    final orders = restaurantData.orders.reversed.take(4).toList();
+    final orders = dashBoard?.recentOrders ?? [];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1362,7 +1313,8 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
           _emptyCard('Aucune commande pour le moment.')
         else
           ...orders.map((order) {
-            final statusColor = _statusColor(order.status);
+            final displayStatus = _formatOrderStatus(order.status);
+            final statusColor = _statusColor(displayStatus);
 
             return Container(
               margin: const EdgeInsets.only(bottom: 10),
@@ -1391,7 +1343,9 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          order.id,
+                          order.id.length > 12
+                              ? '#${order.id.substring(order.id.length - 8)}'
+                              : '#${order.id}',
                           style: const TextStyle(
                             color: green,
                             fontWeight: FontWeight.bold,
@@ -1417,7 +1371,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            order.status,
+                            displayStatus,
                             style: TextStyle(
                               color: statusColor,
                               fontSize: 10,
@@ -1430,7 +1384,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${formatCfa(order.total)} F',
+                    '${_formatAmount(order.total)} F',
                     style: const TextStyle(
                       color: green,
                       fontSize: 12,
@@ -1452,6 +1406,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
         return const Color(0xFF2E8B57);
       case 'En attente':
         return const Color(0xFFE7A33E);
+      case 'Annulée':
       case 'Refusée':
         return Colors.red;
       case 'Prête':
@@ -1462,7 +1417,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
   }
 
   // ============================================================
-  // MENU
+  // MENU - DONNÉES LOCALES CONSERVÉES
   // ============================================================
 
   Widget _buildMenuSummary(int available, int total) {
@@ -1523,7 +1478,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
   }
 
   // ============================================================
-  // STATUT DU RESTAURANT
+  // STATUT DU RESTAURANT - DONNÉES LOCALES CONSERVÉES
   // ============================================================
 
   Widget _buildRestaurantStatus() {
@@ -1583,6 +1538,10 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
       ),
     );
   }
+
+  // ============================================================
+  // EMPTY CARD
+  // ============================================================
 
   Widget _emptyCard(String message) {
     return Container(

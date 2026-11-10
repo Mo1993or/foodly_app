@@ -22,31 +22,67 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
 
   List<OfferModel> listOffers = [];
   bool isLoading = false;
-  _fetchOffers() async {
+  Future<void> _fetchOffers() async {
     try {
+      if (!mounted) return;
+
       setState(() {
         isLoading = true;
       });
-      await RestaurantService().fetchOffer().then(
-        (value) => {
-          setState(() {
-            listOffers = value;
-            isLoading = false;
-            _selectedOffer = "pro";
-            // _name = listOffers.firstWhere((o) => o.name == _selectedOffer).name;
-          }),
-        },
+
+      final value = await RestaurantService().fetchOffer();
+
+      if (!mounted) return;
+
+      final activeOffer =
+          widget.restaurant?.activeOffer.trim().toLowerCase() ?? '';
+
+      // Recherche de l'offre actuellement active du restaurant.
+      final matchingOffer = value.where(
+        (offer) => offer.name.trim().toLowerCase() == activeOffer,
       );
+
+      // Si aucune offre active ne correspond, sélectionner Pro par défaut.
+      final defaultOffer = value.where(
+        (offer) => offer.name.trim().toLowerCase() == 'pro',
+      );
+
+      setState(() {
+        listOffers = value;
+
+        if (matchingOffer.isNotEmpty) {
+          _selectedOffer = matchingOffer.first.name;
+        } else if (defaultOffer.isNotEmpty) {
+          _selectedOffer = defaultOffer.first.name;
+        } else if (value.isNotEmpty) {
+          _selectedOffer = value.first.name;
+        }
+
+        isLoading = false;
+      });
     } catch (err) {
-      print("err $err");
+      debugPrint('Erreur chargement offres : $err');
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
     }
   }
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
+
+    _selectedOffer =
+        widget.restaurant?.activeOffer.trim().toLowerCase() ?? 'pro';
+
     _fetchOffers();
+
+    debugPrint(
+      'Offre active du restaurant : ${widget.restaurant?.activeOffer}',
+    );
   }
 
   bool _isLoading = false;
@@ -121,6 +157,17 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                       children: [
                         Row(
                           children: [
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: IconButton(
+                                icon: const Icon(
+                                  Icons.arrow_back_ios_new,
+                                  color: foodlyGreen,
+                                  size: 22,
+                                ),
+                                onPressed: () => Navigator.pop(context),
+                              ),
+                            ),
                             Container(
                               width: 48,
                               height: 48,
