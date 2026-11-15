@@ -225,4 +225,54 @@ class RestaurantService {
       throw Exception('$e');
     }
   }
+
+  dynamic updateOpenRestaurant(String id, bool isOpen) async {
+    await _readToken();
+    print("data sub ${json.encode(id)}");
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$apiUrl/restaurants/$id/open-status'),
+        headers: await _headersAuth(token),
+        body: json.encode({"isOpen": isOpen}),
+      );
+      print('response.body dd : ${response.body}');
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        print("object sub  ${responseData}");
+        return responseData;
+      } else {
+        final errorMessage = responseData['message'];
+        throw Exception('$errorMessage');
+      }
+    } catch (e) {
+      throw Exception('$e');
+    }
+  }
+
+  dynamic updateRestaurant(String id, var data) async {
+    await _readToken();
+    print("data sub ${json.encode(data)}");
+
+    try {
+      final response = await http.patch(
+        Uri.parse('$apiUrl/restaurants/$id/update'),
+        headers: await _headersAuth(token),
+        body: json.encode(data),
+      );
+      print('response.body dd : ${response.body}');
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        print("object sub  ${responseData}");
+        return responseData;
+      } else {
+        final errorMessage = responseData['message'];
+        throw Exception('$errorMessage');
+      }
+    } catch (e) {
+      throw Exception('$e');
+    }
+  }
 }

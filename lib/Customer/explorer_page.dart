@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/food_detail_page.dart';
 import 'package:foodly/Customer/food_detail_screen.dart';
+import 'package:foodly/Restaurant/restaurant_add_edit_dish_screen.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/dishes_model.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 
 import 'package:foodly/model/restaurant_model.dart';
 import 'package:foodly/service/restaurant_service.dart';
-
-const Color foodlyOrange = Color(0xFFF56624);
-const Color foodlyGreen = Color(0xFF173D32);
-const Color foodlyBackground = Color(0xFFFAF8F3);
 
 class ExploreScreen extends StatefulWidget {
   const ExploreScreen({super.key});
@@ -326,10 +324,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           restaurant.name,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 21,
                             fontWeight: FontWeight.bold,
-                            color: foodlyGreen,
+                            color: green,
                           ),
                         ),
                         const SizedBox(height: 5),
@@ -358,11 +356,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.location_on_outlined,
-                      color: foodlyOrange,
-                      size: 20,
-                    ),
+                    Icon(Icons.location_on_outlined, color: orange, size: 20),
                     const SizedBox(width: 7),
                     Expanded(
                       child: Text(
@@ -424,7 +418,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: foodlyOrange,
+                    backgroundColor: orange,
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
@@ -446,8 +440,8 @@ class _ExploreScreenState extends State<ExploreScreen> {
 
   Widget _restaurantPlaceholder() {
     return Container(
-      color: foodlyBackground,
-      child: const Icon(Icons.restaurant, color: foodlyOrange, size: 30),
+      color: background,
+      child: Icon(Icons.restaurant, color: orange, size: 30),
     );
   }
 
@@ -475,7 +469,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
     final restaurants = _filteredRestaurants;
 
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       body: SafeArea(
         child: Column(
           children: [
@@ -484,7 +478,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -493,11 +487,11 @@ class _ExploreScreenState extends State<ExploreScreen> {
                           style: TextStyle(
                             fontSize: 27,
                             fontWeight: FontWeight.bold,
-                            color: foodlyGreen,
+                            color: green,
                           ),
                         ),
-                        SizedBox(height: 4),
-                        Text(
+                        const SizedBox(height: 4),
+                        const Text(
                           'Trouve un restaurant près de toi',
                           style: TextStyle(color: Colors.black54),
                         ),
@@ -508,7 +502,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     onPressed: _getCurrentLocation,
                     tooltip: 'Ma position',
                     style: IconButton.styleFrom(
-                      backgroundColor: foodlyOrange,
+                      backgroundColor: orange,
                       foregroundColor: Colors.white,
                     ),
                     icon: _loadingLocation
@@ -539,9 +533,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                     color: Colors.black45,
                     fontSize: 14,
                   ),
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search_rounded,
-                    color: foodlyOrange,
+                    color: orange,
                     size: 25,
                   ),
                   suffixIcon: _searchQuery.isNotEmpty
@@ -566,10 +560,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
-                    borderSide: const BorderSide(
-                      color: foodlyOrange,
-                      width: 1.5,
-                    ),
+                    borderSide: BorderSide(color: orange, width: 1.5),
                   ),
                 ),
               ),
@@ -590,10 +581,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                   return ChoiceChip(
                     label: Text(category),
                     selected: selected,
-                    selectedColor: foodlyGreen,
+                    selectedColor: green,
                     backgroundColor: Colors.white,
                     labelStyle: TextStyle(
-                      color: selected ? Colors.white : foodlyGreen,
+                      color: selected ? Colors.white : green,
                       fontWeight: FontWeight.w600,
                     ),
                     onSelected: (_) {
@@ -660,13 +651,13 @@ class _ExploreScreenState extends State<ExploreScreen> {
               padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
                       'Restaurants à découvrir',
                       style: TextStyle(
                         fontSize: 19,
                         fontWeight: FontWeight.bold,
-                        color: foodlyGreen,
+                        color: secondaryText,
                       ),
                     ),
                   ),
@@ -683,9 +674,7 @@ class _ExploreScreenState extends State<ExploreScreen> {
             SizedBox(
               height: 130,
               child: _isLoadingRestaurants
-                  ? const Center(
-                      child: CircularProgressIndicator(color: foodlyOrange),
-                    )
+                  ? Center(child: CircularProgressIndicator(color: orange))
                   : _restaurantError != null
                   ? Center(
                       child: Padding(
@@ -703,9 +692,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                             ),
                             TextButton(
                               onPressed: _fetchRestaurants,
-                              child: const Text(
+                              child: Text(
                                 'Réessayer',
-                                style: TextStyle(color: foodlyOrange),
+                                style: TextStyle(color: orange),
                               ),
                             ),
                           ],
@@ -764,10 +753,10 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                   restaurant.name,
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
-                                    color: foodlyGreen,
+                                    color: green,
                                   ),
                                 ),
                                 const SizedBox(height: 7),
@@ -792,9 +781,9 @@ class _ExploreScreenState extends State<ExploreScreen> {
                                           : 'Nouveau',
                                     ),
                                     const Spacer(),
-                                    const Icon(
+                                    Icon(
                                       Icons.location_on_outlined,
-                                      color: foodlyOrange,
+                                      color: orange,
                                       size: 18,
                                     ),
                                     const Text(

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:foodly/Restaurant/restaurant_profil_screen.dart' as FoodlyApp;
 import 'package:foodly/Restaurant/retaurant_data.dart';
+import 'package:foodly/Utils/network.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/dishes_model.dart';
 import 'package:foodly/model/restaurant_model.dart';
 import 'package:foodly/service/restaurant_service.dart';
@@ -48,28 +51,29 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
         final dishes = dishesList;
 
         return Scaffold(
-          backgroundColor: foodlyBackground,
+          backgroundColor: background,
           appBar: AppBar(
             leading: Container(),
-            backgroundColor: foodlyBackground,
-            title: const Text(
+            backgroundColor: background,
+            title: Text(
               'Mon menu',
-              style: TextStyle(color: foodlyGreen, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: widget.restaurant?.colors.first.toString().toColor(),
+                fontWeight: FontWeight.bold,
+              ),
             ),
             actions: [
               IconButton(
                 onPressed: () => _openDishForm(context),
-                icon: const Icon(
-                  Icons.add_circle_outline,
-                  color: foodlyOrange,
-                  size: 28,
-                ),
+                icon: Icon(Icons.add_circle_outline, color: orange, size: 28),
               ),
             ],
           ),
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () => _openDishForm(context),
-            backgroundColor: foodlyOrange,
+            backgroundColor: widget.restaurant?.colors.first
+                .toString()
+                .toColor(),
             foregroundColor: Colors.white,
             icon: const Icon(Icons.add),
             label: const Text('Ajouter un plat'),
@@ -101,9 +105,11 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                               children: [
                                 Text(
                                   dish.name,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 16,
-                                    color: foodlyGreen,
+                                    color: widget.restaurant?.colors.first
+                                        .toString()
+                                        .toColor(),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -118,8 +124,8 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                                 const SizedBox(height: 7),
                                 Text(
                                   formatCfa(dish.price),
-                                  style: const TextStyle(
-                                    color: foodlyOrange,
+                                  style: TextStyle(
+                                    color: secondaryText,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -130,7 +136,9 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
                                       : 'Indisponible',
                                   style: TextStyle(
                                     color: dish.isAvailable
-                                        ? Colors.green
+                                        ? widget.restaurant?.colors.first
+                                              .toString()
+                                              .toColor()
                                         : Colors.red,
                                     fontSize: 12,
                                   ),
@@ -183,7 +191,7 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
       width: 88,
       height: 94,
       decoration: BoxDecoration(
-        color: foodlyBackground,
+        color: widget.restaurant?.colors.first.toString().toColor(),
         borderRadius: BorderRadius.circular(15),
       ),
       clipBehavior: Clip.antiAlias,
@@ -192,9 +200,9 @@ class _RestaurantMenuScreenState extends State<RestaurantMenuScreen> {
               dish.imageUrl,
               fit: BoxFit.cover,
               errorBuilder: (_, __, ___) =>
-                  const Icon(Icons.fastfood, color: foodlyOrange, size: 35),
+                  Icon(Icons.fastfood, color: orange, size: 35),
             )
-          : const Icon(Icons.fastfood, color: foodlyOrange, size: 35),
+          : Icon(Icons.fastfood, color: orange, size: 35),
     );
   }
 

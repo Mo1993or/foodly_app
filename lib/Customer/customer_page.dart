@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Auth/login_screen.dart';
 import 'package:foodly/Customer/checkout_page.dart';
-import 'package:foodly/Customer/explorer_page.dart' hide foodlyOrange;
-import 'package:foodly/Customer/food_detail_page.dart' hide foodlyOrange;
-import 'package:foodly/Customer/food_detail_screen.dart' hide foodlyOrange;
-import 'package:foodly/Customer/my_order_screen.dart' hide foodlyOrange;
-import 'package:foodly/Customer/panier_page.dart' hide foodlyOrange;
+import 'package:foodly/Customer/explorer_page.dart';
+import 'package:foodly/Customer/food_detail_page.dart';
+import 'package:foodly/Customer/food_detail_screen.dart';
+import 'package:foodly/Customer/my_order_screen.dart';
+import 'package:foodly/Customer/panier_page.dart';
 import 'package:foodly/Customer/profile_page.dart';
-import 'package:foodly/main.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/dishes_model.dart';
 import 'package:foodly/model/restaurant_model.dart';
 import 'package:foodly/service/restaurant_service.dart';
@@ -34,13 +34,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   bool isLoading = true;
 
+  // FOODLY COLOR PALETTE
+
   List<RestaurantModel> get _filteredRestaurants {
     final query = _searchController.text.trim().toLowerCase();
 
     return restaurants.where((restaurant) {
       final matchesSearch =
-          restaurant.name.toString().toLowerCase().contains(query) ||
-          restaurant.restaurantType.toString().toLowerCase().contains(query);
+          restaurant.name.toLowerCase().contains(query) ||
+          restaurant.restaurantType.toLowerCase().contains(query);
 
       final matchesCategory =
           _selectedCategory == 0 ||
@@ -55,7 +57,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   void initState() {
     super.initState();
 
-    // Charger le panier sauvegardé.
     foodlyCart.loadCart();
 
     _fetchRestaurant();
@@ -71,9 +72,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
   Future<void> _fetchRestaurant() async {
     try {
-      setState(() {
-        isLoading = true;
-      });
+      if (mounted) {
+        setState(() => isLoading = true);
+      }
 
       final value = await RestaurantService().fetchRestaurants();
 
@@ -88,9 +89,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
       if (!mounted) return;
 
-      setState(() {
-        isLoading = false;
-      });
+      setState(() => isLoading = false);
     }
   }
 
@@ -104,9 +103,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
       if (!mounted) return;
 
-      setState(() {
-        categories = value;
-      });
+      setState(() => categories = value);
     } catch (error) {
       debugPrint('Erreur catégories : $error');
     }
@@ -118,9 +115,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
 
       if (!mounted) return;
 
-      setState(() {
-        dishes = value;
-      });
+      setState(() => dishes = value);
     } catch (error) {
       debugPrint('Erreur plats : $error');
     }
@@ -129,7 +124,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: FoodlyApp.background,
+      backgroundColor: background,
       body: SafeArea(
         child: IndexedStack(
           index: _selectedTab,
@@ -152,31 +147,30 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedTab,
         onDestinationSelected: (index) {
-          setState(() {
-            _selectedTab = index;
-          });
+          setState(() => _selectedTab = index);
         },
         backgroundColor: Colors.white,
-        indicatorColor: FoodlyApp.orange.withValues(alpha: 0.12),
+        indicatorColor: softPink,
+        elevation: 8,
         destinations: const [
           NavigationDestination(
             icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home_rounded),
+            selectedIcon: Icon(Icons.home_rounded, color: green),
             label: 'Accueil',
           ),
           NavigationDestination(
             icon: Icon(Icons.explore_outlined),
-            selectedIcon: Icon(Icons.explore_rounded),
+            selectedIcon: Icon(Icons.explore_rounded, color: green),
             label: 'Explorer',
           ),
           NavigationDestination(
             icon: Icon(Icons.receipt_long_outlined),
-            selectedIcon: Icon(Icons.receipt_long_rounded),
+            selectedIcon: Icon(Icons.receipt_long_rounded, color: green),
             label: 'Commandes',
           ),
           NavigationDestination(
             icon: Icon(Icons.person_outline_rounded),
-            selectedIcon: Icon(Icons.person_rounded),
+            selectedIcon: Icon(Icons.person_rounded, color: green),
             label: 'Profil',
           ),
         ],
@@ -188,7 +182,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     final filteredRestaurants = _filteredRestaurants;
 
     return RefreshIndicator(
-      color: foodlyOrange,
+      color: green,
       backgroundColor: Colors.white,
       strokeWidth: 2.5,
       displacement: 55,
@@ -202,22 +196,18 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
             sliver: SliverToBoxAdapter(child: _buildHeader()),
           ),
-
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 24, 20, 0),
             sliver: SliverToBoxAdapter(child: _buildSearch()),
           ),
-
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 22, 20, 0),
             sliver: SliverToBoxAdapter(child: _buildBanner()),
           ),
-
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 26, 20, 0),
             sliver: SliverToBoxAdapter(child: _buildCategories()),
           ),
-
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
             sliver: SliverToBoxAdapter(
@@ -228,7 +218,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
             ),
           ),
-
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 0),
             sliver: SliverList(
@@ -240,6 +229,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       child: Text(
                         'Aucun restaurant trouvé. Essayez une autre recherche.',
                         textAlign: TextAlign.center,
+                        style: TextStyle(color: secondaryText),
                       ),
                     );
                   }
@@ -255,7 +245,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
             ),
           ),
-
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
             sliver: SliverToBoxAdapter(
@@ -266,7 +255,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               ),
             ),
           ),
-
           SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
             sliver: SliverToBoxAdapter(
@@ -276,7 +264,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     ? const Center(
                         child: Text(
                           'Aucun plat disponible pour le moment.',
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: secondaryText),
                         ),
                       )
                     : ListView.separated(
@@ -298,7 +286,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
-  // HEADER AVEC BADGE PANIER RÉACTIF
+  // HEADER
   Widget _buildHeader() {
     return AnimatedBuilder(
       animation: foodlyCart,
@@ -309,18 +297,15 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               height: 46,
               width: 46,
               decoration: BoxDecoration(
-                color: FoodlyApp.orange,
+                color: green,
                 borderRadius: BorderRadius.circular(15),
-              ),
-              child: const Icon(
-                Icons.restaurant_menu_rounded,
-                color: Colors.white,
-                size: 27,
+                image: const DecorationImage(
+                  image: AssetImage("assets/images/logo.png"),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-
             const SizedBox(width: 12),
-
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -330,37 +315,32 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     style: TextStyle(
                       fontSize: 10,
                       letterSpacing: 1.1,
-                      color: Colors.grey.shade600,
+                      color: secondaryText,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                   const SizedBox(height: 4),
                   const Row(
                     children: [
-                      Icon(
-                        Icons.location_on_rounded,
-                        color: FoodlyApp.orange,
-                        size: 17,
-                      ),
+                      Icon(Icons.location_on_rounded, color: green, size: 17),
                       SizedBox(width: 3),
                       Flexible(
                         child: Text(
                           'Dakar, Sénégal',
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
-                            color: FoodlyApp.green,
+                            color: green,
                             fontWeight: FontWeight.w800,
                             fontSize: 14,
                           ),
                         ),
                       ),
-                      Icon(Icons.keyboard_arrow_down_rounded),
+                      Icon(Icons.keyboard_arrow_down_rounded, color: green),
                     ],
                   ),
                 ],
               ),
             ),
-
             _roundAction(Icons.shopping_bag_outlined, () {
               Navigator.push(
                 context,
@@ -382,23 +362,32 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // SEARCH
   Widget _buildSearch() {
     return Container(
       height: 54,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: const Color(0xFFECEAE5)),
+        border: Border.all(color: lightBorder),
+        boxShadow: [
+          BoxShadow(
+            color: green.withValues(alpha: 0.025),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: TextField(
         controller: _searchController,
         onChanged: (_) => setState(() {}),
+        style: const TextStyle(color: green, fontSize: 13),
         decoration: InputDecoration(
           hintText: 'Restaurant, plat, cuisine...',
-          hintStyle: const TextStyle(color: Color(0xFF999999), fontSize: 13),
-          prefixIcon: const Icon(Icons.search_rounded, color: FoodlyApp.green),
+          hintStyle: const TextStyle(color: secondaryText, fontSize: 13),
+          prefixIcon: const Icon(Icons.search_rounded, color: green),
           suffixIcon: IconButton(
-            icon: const Icon(Icons.tune_rounded),
+            icon: const Icon(Icons.tune_rounded, color: orange),
             onPressed: () {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
@@ -414,13 +403,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // BANNER
   Widget _buildBanner() {
     return Container(
       height: 180,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(24),
-        color: FoodlyApp.green,
+        color: green,
       ),
       child: Stack(
         children: [
@@ -428,8 +418,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             child: Image.network(
               'https://images.unsplash.com/photo-1547592180-85f173990554?w=900',
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) =>
-                  const ColoredBox(color: FoodlyApp.green),
+              errorBuilder: (_, __, ___) => const ColoredBox(color: green),
             ),
           ),
           Positioned.fill(
@@ -437,8 +426,8 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    FoodlyApp.green.withValues(alpha: 0.95),
-                    FoodlyApp.green.withValues(alpha: 0.15),
+                    green.withValues(alpha: 0.96),
+                    green.withValues(alpha: 0.18),
                   ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
@@ -460,13 +449,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: FoodlyApp.orange,
+                      color: orange,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
-                      'BIENVENUE CHEZ FOODLY',
+                      'BIENVENUE CHEZ THIOP',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: green,
                         fontSize: 9,
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
@@ -497,24 +486,25 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // CATEGORIES
   Widget _buildCategories() {
-    final icons = [
-      Icons.grid_view_rounded,
-      Icons.rice_bowl_rounded,
-      Icons.lunch_dining_rounded,
-      Icons.local_pizza_rounded,
-      Icons.set_meal_rounded,
-      Icons.set_meal_rounded,
-      Icons.set_meal_rounded,
-      Icons.set_meal_rounded,
-      Icons.local_pizza_rounded,
-      Icons.lunch_dining_rounded,
-      Icons.local_pizza_rounded,
-      Icons.set_meal_rounded,
-      Icons.icecream_rounded,
-      Icons.set_meal_rounded,
-      Icons.icecream_rounded,
-      Icons.grid_view_rounded,
+    final List<IconData> icons = [
+      Icons.grid_view_rounded, // Tout
+      Icons.restaurant_rounded, // Restaurant traditionnel
+      Icons.lunch_dining_rounded, // Fast-food
+      Icons.local_pizza_rounded, // Pizzeria
+      Icons.outdoor_grill_rounded, // Grillades
+      Icons.rice_bowl_rounded, // Cuisine sénégalaise
+      Icons.dinner_dining_rounded, // Cuisine africaine
+      Icons.ramen_dining_rounded, // Cuisine asiatique
+      Icons.cake_rounded, // Pâtisserie
+      Icons.bakery_dining_rounded, // Boulangerie
+      Icons.coffee_rounded, // Café
+      Icons.local_cafe_rounded, // Jus et boissons
+      Icons.restaurant_menu_rounded, // Restaurant gastronomique
+      Icons.eco_rounded, // Végétarien
+      Icons.set_meal_rounded, // Fruits de mer
+      Icons.more_horiz_rounded, // Autre
     ];
 
     return Column(
@@ -522,14 +512,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
       children: [
         _sectionTitle('Explorer par envie', null, null),
         const SizedBox(height: 16),
-
         SizedBox(
           height: 96,
           child: categories.isEmpty
               ? const Center(
                   child: Text(
                     'Chargement des catégories...',
-                    style: TextStyle(color: Colors.grey, fontSize: 12),
+                    style: TextStyle(color: secondaryText, fontSize: 12),
                   ),
                 )
               : ListView.separated(
@@ -554,22 +543,25 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                               height: 60,
                               width: 60,
                               decoration: BoxDecoration(
-                                color: selected
-                                    ? FoodlyApp.orange
-                                    : Colors.white,
+                                color: selected ? green : Colors.white,
                                 borderRadius: BorderRadius.circular(20),
                                 border: Border.all(
-                                  color: selected
-                                      ? FoodlyApp.orange
-                                      : const Color(0xFFECEAE5),
+                                  color: selected ? green : lightBorder,
                                 ),
+                                boxShadow: selected
+                                    ? [
+                                        BoxShadow(
+                                          color: green.withValues(alpha: 0.13),
+                                          blurRadius: 12,
+                                          offset: const Offset(0, 4),
+                                        ),
+                                      ]
+                                    : null,
                               ),
                               child: Icon(
                                 icons[index % icons.length],
                                 size: 27,
-                                color: selected
-                                    ? Colors.white
-                                    : FoodlyApp.green,
+                                color: selected ? Colors.white : orange,
                               ),
                             ),
                             const SizedBox(height: 8),
@@ -582,9 +574,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                                 fontWeight: selected
                                     ? FontWeight.w800
                                     : FontWeight.w500,
-                                color: selected
-                                    ? FoodlyApp.orange
-                                    : FoodlyApp.green,
+                                color: selected ? green : secondaryText,
                               ),
                             ),
                           ],
@@ -598,6 +588,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // RESTAURANT CARD
   Widget _restaurantCard(RestaurantModel restaurant) {
     return Material(
       color: Colors.white,
@@ -632,7 +623,9 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     restaurant.coverPhotoUrl,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => ColoredBox(
-                      color: restaurant.colors[0].toColor,
+                      color: restaurant.colors.isNotEmpty
+                          ? restaurant.colors[0].toColor
+                          : green,
                       child: const Icon(
                         Icons.restaurant_rounded,
                         color: Colors.white,
@@ -655,7 +648,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       child: const Text(
                         'À découvrir',
                         style: TextStyle(
-                          color: FoodlyApp.green,
+                          color: green,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -678,7 +671,6 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 ],
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.all(15),
               child: Column(
@@ -692,7 +684,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                           style: const TextStyle(
                             fontSize: 17,
                             fontWeight: FontWeight.w800,
-                            color: FoodlyApp.green,
+                            color: green,
                           ),
                         ),
                       ),
@@ -704,64 +696,65 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       const SizedBox(width: 4),
                       Text(
                         restaurant.reviewNote,
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: green,
+                        ),
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 7),
-
                   Text(
                     restaurant.restaurantType,
-                    style: const TextStyle(
-                      color: Color(0xFF777777),
-                      fontSize: 13,
-                    ),
+                    style: const TextStyle(color: secondaryText, fontSize: 13),
                   ),
-
                   const SizedBox(height: 12),
-
                   if (restaurant.isOpen)
-                    Row(
+                    const Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.access_time_rounded,
-                          color: FoodlyApp.green,
+                          color: success,
                           size: 17,
                         ),
-                        const SizedBox(width: 5),
-                        const Text(
+                        SizedBox(width: 5),
+                        Text(
                           'Ouvert',
-                          style: TextStyle(fontSize: 12, color: Colors.green),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: success,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                        const Spacer(),
-                        const Icon(
+                        Spacer(),
+                        Icon(
                           Icons.arrow_forward_rounded,
-                          color: FoodlyApp.green,
+                          color: green,
                           size: 19,
                         ),
                       ],
                     )
                   else
-                    Row(
+                    const Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.access_time_rounded,
-                          color: FoodlyApp.orange,
+                          color: darkPink,
                           size: 17,
                         ),
-                        const SizedBox(width: 5),
-                        const Text(
-                          'Fermer',
+                        SizedBox(width: 5),
+                        Text(
+                          'Fermé',
                           style: TextStyle(
                             fontSize: 12,
-                            color: FoodlyApp.orange,
+                            color: darkPink,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const Spacer(),
-                        const Icon(
+                        Spacer(),
+                        Icon(
                           Icons.arrow_forward_rounded,
-                          color: FoodlyApp.orange,
+                          color: darkPink,
                           size: 19,
                         ),
                       ],
@@ -775,6 +768,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // DISH CARD
   Widget _dishCard(DishesModel dish, RestaurantModel? restaurant) {
     return GestureDetector(
       onTap: () {
@@ -794,7 +788,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFECEAE5)),
+          border: Border.all(color: lightBorder),
+          boxShadow: [
+            BoxShadow(
+              color: green.withValues(alpha: 0.025),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         clipBehavior: Clip.antiAlias,
         child: Column(
@@ -807,16 +808,11 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 dish.imageUrl,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => const ColoredBox(
-                  color: Color(0xFFFFE9D9),
-                  child: Icon(
-                    Icons.restaurant_rounded,
-                    color: FoodlyApp.orange,
-                    size: 35,
-                  ),
+                  color: softPink,
+                  child: Icon(Icons.restaurant_rounded, color: green, size: 35),
                 ),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
               child: Text(
@@ -824,25 +820,22 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
-                  color: FoodlyApp.green,
+                  color: green,
                   fontWeight: FontWeight.w800,
                   fontSize: 13,
                 ),
               ),
             ),
-
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
                 dish.restaurant?.name ?? "",
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Color(0xFF888888), fontSize: 10),
+                style: const TextStyle(color: secondaryText, fontSize: 10),
               ),
             ),
-
             const Spacer(),
-
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 5, 8, 10),
               child: Row(
@@ -851,16 +844,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     child: Text(
                       '${dish.price} FCFA',
                       style: const TextStyle(
-                        color: FoodlyApp.orange,
+                        color: secondaryText,
                         fontWeight: FontWeight.w800,
                         fontSize: 13,
                       ),
                     ),
                   ),
-
                   InkWell(
                     onTap: () {
-                      // Le panier notifie automatiquement le badge.
                       foodlyCart.addItem(
                         id: dish.id.toString(),
                         name: dish.name.toString(),
@@ -872,6 +863,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text('${dish.name} ajouté au panier.'),
+                          backgroundColor: green,
                           duration: const Duration(seconds: 1),
                         ),
                       );
@@ -880,7 +872,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(7),
                       decoration: BoxDecoration(
-                        color: FoodlyApp.orange,
+                        color: green,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: const Icon(
@@ -899,6 +891,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // SECTION TITLE
   Widget _sectionTitle(String title, String? action, VoidCallback? onTap) {
     return Row(
       children: [
@@ -909,7 +902,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               fontSize: 18,
               fontWeight: FontWeight.w800,
               letterSpacing: -0.4,
-              color: FoodlyApp.green,
+              color: secondaryText,
             ),
           ),
         ),
@@ -919,7 +912,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             child: Text(
               action,
               style: const TextStyle(
-                color: FoodlyApp.orange,
+                color: darkPink,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),
@@ -929,6 +922,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // ROUND ACTION + CART BADGE
   Widget _roundAction(IconData icon, VoidCallback onTap, {int badge = 0}) {
     return InkWell(
       onTap: onTap,
@@ -939,14 +933,13 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(15),
-          border: Border.all(color: const Color(0xFFECEAE5)),
+          border: Border.all(color: lightBorder),
         ),
         child: Stack(
           alignment: Alignment.center,
           clipBehavior: Clip.none,
           children: [
-            Icon(icon, color: FoodlyApp.green, size: 22),
-
+            Icon(icon, color: green, size: 22),
             if (badge > 0)
               Positioned(
                 top: -5,
@@ -958,7 +951,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                   ),
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                    color: FoodlyApp.orange,
+                    color: green,
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
@@ -978,6 +971,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
     );
   }
 
+  // PLACEHOLDER
   Widget _buildPlaceholder(IconData icon, String title, String description) {
     return Center(
       child: Padding(
@@ -989,17 +983,17 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               height: 90,
               width: 90,
               decoration: BoxDecoration(
-                color: FoodlyApp.orange.withValues(alpha: 0.1),
+                color: softPink,
                 borderRadius: BorderRadius.circular(28),
               ),
-              child: Icon(icon, size: 43, color: FoodlyApp.orange),
+              child: Icon(icon, size: 43, color: green),
             ),
             const SizedBox(height: 20),
             Text(
               title,
               textAlign: TextAlign.center,
               style: const TextStyle(
-                color: FoodlyApp.green,
+                color: green,
                 fontWeight: FontWeight.w800,
                 fontSize: 23,
               ),
@@ -1008,15 +1002,12 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
             Text(
               description,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Color(0xFF777777), height: 1.5),
+              style: const TextStyle(color: secondaryText, height: 1.5),
             ),
             const SizedBox(height: 18),
             const Text(
               'Cette partie sera développée ensuite.',
-              style: TextStyle(
-                color: FoodlyApp.orange,
-                fontWeight: FontWeight.w600,
-              ),
+              style: TextStyle(color: darkPink, fontWeight: FontWeight.w600),
             ),
           ],
         ),

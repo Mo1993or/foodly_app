@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:foodly/Restaurant/restaurant_profil_screen.dart' as FoodlyApp;
 import 'package:foodly/Restaurant/retaurant_data.dart';
 import 'package:foodly/Restaurant/retaurant_orders_detail_screen.dart';
+import 'package:foodly/Utils/network.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/order_model.dart';
 import 'package:foodly/model/restaurant_model.dart';
 import 'package:foodly/service/order_service.dart';
@@ -111,9 +114,9 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('Commande mise à jour avec succès.'),
-          backgroundColor: foodlyGreen,
+          backgroundColor: widget.restaurant?.colors.first.toString().toColor(),
         ),
       );
     } catch (e) {
@@ -165,7 +168,7 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: newStatus == 'CANCELLED'
                     ? Colors.red
-                    : foodlyGreen,
+                    : widget.restaurant?.colors.first.toString().toColor(),
                 foregroundColor: Colors.white,
               ),
               child: const Text('Confirmer'),
@@ -227,19 +230,25 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
         }).toList();
 
         return Scaffold(
-          backgroundColor: foodlyBackground,
+          backgroundColor: background,
           appBar: AppBar(
             leading: Container(),
-            backgroundColor: foodlyBackground,
+            backgroundColor: background,
             elevation: 0,
-            title: const Text(
+            title: Text(
               'Mes commandes',
-              style: TextStyle(color: foodlyGreen, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                color: widget.restaurant?.colors.first.toString().toColor(),
+                fontWeight: FontWeight.bold,
+              ),
             ),
             actions: [
               IconButton(
                 onPressed: _isLoading ? null : _fetchOrder,
-                icon: const Icon(Icons.refresh, color: foodlyGreen),
+                icon: Icon(
+                  Icons.refresh,
+                  color: widget.restaurant?.colors.first.toString().toColor(),
+                ),
               ),
             ],
           ),
@@ -259,10 +268,10 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                     return ChoiceChip(
                       label: Text(filter),
                       selected: selected,
-                      selectedColor: foodlyGreen,
+                      selectedColor: secondaryText,
                       backgroundColor: Colors.white,
                       labelStyle: TextStyle(
-                        color: selected ? Colors.white : foodlyGreen,
+                        color: selected ? Colors.white : secondaryText,
                         fontWeight: FontWeight.w600,
                       ),
                       onSelected: (_) {
@@ -279,8 +288,12 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
 
               Expanded(
                 child: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: foodlyGreen),
+                    ? Center(
+                        child: CircularProgressIndicator(
+                          color: widget.restaurant?.colors.first
+                              .toString()
+                              .toColor(),
+                        ),
                       )
                     : orders.isEmpty
                     ? const Center(
@@ -298,7 +311,9 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                         ),
                       )
                     : RefreshIndicator(
-                        color: foodlyGreen,
+                        color: widget.restaurant?.colors.first
+                            .toString()
+                            .toColor(),
                         onRefresh: _fetchOrder,
                         child: ListView.builder(
                           padding: const EdgeInsets.all(16),
@@ -341,8 +356,8 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
               Expanded(
                 child: Text(
                   order.id,
-                  style: const TextStyle(
-                    color: foodlyGreen,
+                  style: TextStyle(
+                    color: widget.restaurant?.colors.first.toString().toColor(),
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -384,8 +399,8 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
               Expanded(
                 child: Text(
                   formatCfa(order.total),
-                  style: const TextStyle(
-                    color: foodlyGreen,
+                  style: TextStyle(
+                    color: secondaryText,
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                   ),
@@ -400,16 +415,14 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                       builder: (_) => RestaurantOrderDetailScreen(
                         order: order,
                         statusTranslate: orderStatus,
+                        restaurant: widget.restaurant,
                       ),
                     ),
                   ).then((_) {
                     _fetchOrder();
                   });
                 },
-                child: const Text(
-                  'Détails',
-                  style: TextStyle(color: foodlyOrange),
-                ),
+                child: Text('Détails', style: TextStyle(color: orange)),
               ),
             ],
           ),
@@ -449,7 +462,7 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                             newStatus: 'CONFIRMED',
                           ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: foodlyOrange,
+                      backgroundColor: orange,
                       foregroundColor: Colors.white,
                     ),
                     child: const Text('Accepter'),
@@ -469,7 +482,9 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
                     ? null
                     : () => _updateOrder(order, nextStatusCode),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: foodlyGreen,
+                  backgroundColor: widget.restaurant?.colors.first
+                      .toString()
+                      .toColor(),
                   foregroundColor: Colors.white,
                 ),
                 child: isUpdating
@@ -496,7 +511,7 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
 
     switch (status) {
       case 'Terminée':
-        color = Colors.green;
+        color = widget.restaurant!.colors.first.toString().toColor();
         break;
 
       case 'Refusée':
@@ -509,11 +524,11 @@ class _RestaurantOrdersScreenState extends State<RestaurantOrdersScreen> {
         break;
 
       case 'Acceptée':
-        color = foodlyGreen;
+        color = widget.restaurant!.colors.first.toString().toColor();
         break;
 
       default:
-        color = foodlyOrange;
+        color = orange;
     }
 
     return Container(

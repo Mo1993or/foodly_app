@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/customer_page.dart';
 import 'package:foodly/Onboarding/role_page.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/main.dart';
 
 class OnboardingScreen extends StatefulWidget {
@@ -23,8 +24,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       description:
           'Découvrez les restaurants autour de vous et trouvez '
           'facilement votre prochaine adresse préférée.',
-      background: Color(0xFFFFE9D9),
-      iconColor: Color(0xFFF56624),
+      background: background,
+      iconColor: orange,
       tags: ['Découverte', 'Proximité'],
     ),
     _OnboardingData(
@@ -34,7 +35,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'Parcourez les menus, choisissez vos plats et '
           'passez commande simplement, sans créer de compte.',
       background: Color(0xFFE5EFE7),
-      iconColor: Color(0xFF173D32),
+      iconColor: green,
       tags: ['Menus', 'Commande facile'],
     ),
     _OnboardingData(
@@ -44,7 +45,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           'Vous êtes restaurateur ? Rejoignez Foodly pour '
           'publier vos plats, recevoir des commandes et suivre vos ventes.',
       background: Color(0xFFFFE9D9),
-      iconColor: Color(0xFFF56624),
+      iconColor: orange,
       tags: ['Visibilité', 'Gestion des ventes'],
     ),
   ];
@@ -61,9 +62,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _finishOnboarding() {
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const CustomerHomeScreen()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const CustomerHomeScreen()));
   }
 
   @override
@@ -88,10 +89,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   onPressed: _finishOnboarding,
                   child: const Text(
                     'Passer',
-                    style: TextStyle(
-                      color: FoodlyApp.green,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(color: green, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -123,9 +121,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 7,
                         width: selected ? 25 : 7,
                         decoration: BoxDecoration(
-                          color: selected
-                              ? FoodlyApp.orange
-                              : const Color(0xFFD8D8D8),
+                          color: selected ? orange : const Color(0xFFD8D8D8),
                           borderRadius: BorderRadius.circular(10),
                         ),
                       );
@@ -138,7 +134,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     child: ElevatedButton(
                       onPressed: _nextPage,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: FoodlyApp.orange,
+                        backgroundColor: orange,
                         foregroundColor: Colors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
@@ -276,7 +272,7 @@ class _OnboardingPage extends StatelessWidget {
                   height: 1.2,
                   fontWeight: FontWeight.w800,
                   letterSpacing: -0.7,
-                  color: FoodlyApp.green,
+                  color: green,
                 ),
               ),
               const SizedBox(height: 16),

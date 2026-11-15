@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/panier_page.dart';
+import 'package:foodly/Restaurant/restaurant_add_edit_dish_screen.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/dishes_model.dart';
-
-const Color foodlyOrange = Color(0xFFF56624);
-const Color foodlyGreen = Color(0xFF173D32);
-const Color foodlyBackground = Color(0xFFFAF8F3);
 
 class FoodDetailScreen extends StatefulWidget {
   final DishesModel dish;
@@ -41,14 +39,14 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             expandedHeight: 300,
             pinned: true,
-            backgroundColor: foodlyBackground,
-            foregroundColor: foodlyGreen,
+            backgroundColor: background,
+            foregroundColor: green,
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(background: _buildFoodImage()),
             actions: [
@@ -73,8 +71,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                 children: [
                   Text(
                     widget.restaurantName,
-                    style: const TextStyle(
-                      color: foodlyOrange,
+                    style: TextStyle(
+                      color: orange,
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
@@ -82,10 +80,10 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                   const SizedBox(height: 10),
                   Text(
                     foodName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: foodlyGreen,
+                      color: green,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -120,19 +118,19 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                   const SizedBox(height: 24),
                   Text(
                     '$foodPrice FCFA',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: foodlyOrange,
+                      color: orange,
                     ),
                   ),
                   const SizedBox(height: 26),
-                  const Text(
+                  Text(
                     'Description',
                     style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.bold,
-                      color: foodlyGreen,
+                      color: green,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -145,12 +143,12 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 28),
-                  const Text(
+                  Text(
                     'Quantité',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: foodlyGreen,
+                      color: green,
                     ),
                   ),
                   const SizedBox(height: 14),
@@ -198,10 +196,10 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                   const Text('Total', style: TextStyle(color: Colors.black54)),
                   Text(
                     '${foodPrice * quantity} FCFA',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 19,
                       fontWeight: FontWeight.bold,
-                      color: foodlyGreen,
+                      color: green,
                     ),
                   ),
                 ],
@@ -219,7 +217,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: foodlyOrange,
+                    backgroundColor: orange,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -238,8 +236,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     if (imageUrl == null) {
       return Container(
         color: const Color(0xFFFFE9D9),
-        child: const Center(
-          child: Icon(Icons.fastfood_rounded, size: 100, color: foodlyOrange),
+        child: Center(
+          child: Icon(Icons.fastfood_rounded, size: 100, color: orange),
         ),
       );
     }
@@ -250,8 +248,8 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
       errorBuilder: (_, __, ___) {
         return Container(
           color: const Color(0xFFFFE9D9),
-          child: const Center(
-            child: Icon(Icons.fastfood_rounded, size: 100, color: foodlyOrange),
+          child: Center(
+            child: Icon(Icons.fastfood_rounded, size: 100, color: orange),
           ),
         );
       },
@@ -272,7 +270,7 @@ class _FoodDetailScreenState extends State<FoodDetailScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('$foodName ajouté au panier'),
-        backgroundColor: foodlyGreen,
+        backgroundColor: green,
         action: SnackBarAction(
           label: 'OK',
           textColor: Colors.white,
@@ -302,7 +300,7 @@ class _QuantityButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: Colors.black12),
         ),
-        child: Icon(icon, color: onPressed == null ? Colors.grey : foodlyGreen),
+        child: Icon(icon, color: onPressed == null ? Colors.grey : green),
       ),
     );
   }

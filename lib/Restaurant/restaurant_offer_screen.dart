@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/food_detail_screen.dart';
 import 'package:foodly/Restaurant/restaurant_dashbord_screen.dart';
+import 'package:foodly/Restaurant/restaurant_profil_screen.dart' as FoodlyApp;
 import 'package:foodly/Utils/network.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/offer_model.dart';
 import 'package:foodly/model/restaurant_model.dart';
 import 'package:foodly/service/restaurant_service.dart';
@@ -122,7 +124,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
         setState(() {
           _isLoading = false;
         });
-        Navigator.pushReplacement(
+        Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => RestaurantDashboardScreen(
@@ -145,7 +147,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       body: SafeArea(
         child: (isLoading)
             ? const RestaurantShimmer(itemCount: 4)
@@ -160,9 +162,9 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                             Align(
                               alignment: Alignment.centerLeft,
                               child: IconButton(
-                                icon: const Icon(
+                                icon: Icon(
                                   Icons.arrow_back_ios_new,
-                                  color: foodlyGreen,
+                                  color: green,
                                   size: 22,
                                 ),
                                 onPressed: () => Navigator.pop(context),
@@ -172,21 +174,24 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                               width: 48,
                               height: 48,
                               decoration: BoxDecoration(
-                                color: foodlyGreen,
+                                color: green,
                                 borderRadius: BorderRadius.circular(15),
+                                image: DecorationImage(
+                                  image: AssetImage("assets/images/logo.png"),
+                                ),
                               ),
-                              child: const Icon(
-                                Icons.restaurant,
-                                color: Colors.white,
-                                size: 26,
-                              ),
+                              // child: const Icon(
+                              //   Icons.restaurant,
+                              //   color: Colors.white,
+                              //   size: 26,
+                              // ),
                             ),
                             const SizedBox(width: 12),
-                            const Expanded(
+                            Expanded(
                               child: Text(
-                                'Foodly Business',
+                                'THIOP Business',
                                 style: TextStyle(
-                                  color: foodlyGreen,
+                                  color: green,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20,
                                 ),
@@ -198,7 +203,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                         Container(
                           padding: const EdgeInsets.all(22),
                           decoration: BoxDecoration(
-                            color: foodlyGreen,
+                            color: green,
                             borderRadius: BorderRadius.circular(26),
                           ),
                           child: Column(
@@ -264,10 +269,10 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                           ),
                         ),
                         const SizedBox(height: 26),
-                        const Text(
+                        Text(
                           'Choisis ton offre',
                           style: TextStyle(
-                            color: foodlyGreen,
+                            color: secondaryText,
                             fontSize: 23,
                             fontWeight: FontWeight.bold,
                           ),
@@ -280,17 +285,6 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                         const SizedBox(height: 18),
                         ...listOffers.map(_offerCard),
                         const SizedBox(height: 8),
-                        const Text(
-                          'Tarifs indicatifs en FCFA. Les abonnements et '
-                          'les paiements devront être configurés avant '
-                          'une mise en production.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 11,
-                            height: 1.5,
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -306,7 +300,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                       child: ElevatedButton(
                         onPressed: _continue,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: foodlyOrange,
+                          backgroundColor: green,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -350,7 +344,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(22),
           border: Border.all(
-            color: selected ? foodlyOrange : const Color(0xFFECEAE4),
+            color: selected ? green : const Color(0xFFECEAE4),
             width: selected ? 2 : 1,
           ),
         ),
@@ -365,7 +359,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: foodlyOrange,
+                  color: green,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: const Text(
@@ -384,10 +378,14 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: foodlyGreen.withValues(alpha: 0.08),
+                    color: green.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  child: Icon(Icons.local_offer, color: foodlyGreen, size: 26),
+                  child: Icon(
+                    Icons.local_offer,
+                    color: secondaryText,
+                    size: 26,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -396,8 +394,8 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                     children: [
                       Text(
                         offer.name,
-                        style: const TextStyle(
-                          color: foodlyGreen,
+                        style: TextStyle(
+                          color: secondaryText,
                           fontSize: 19,
                           fontWeight: FontWeight.bold,
                         ),
@@ -415,7 +413,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                 Radio<String>(
                   value: offer.name,
                   groupValue: _selectedOffer,
-                  activeColor: foodlyOrange,
+                  activeColor: green,
                   onChanged: (value) {
                     if (value != null) {
                       setState(() => _selectedOffer = value);
@@ -430,8 +428,8 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
               children: [
                 Text(
                   '${offer.price.toString()} FCFA',
-                  style: const TextStyle(
-                    color: foodlyGreen,
+                  style: TextStyle(
+                    color: green,
                     fontSize: 23,
                     fontWeight: FontWeight.bold,
                   ),
@@ -450,19 +448,12 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
                 padding: const EdgeInsets.only(bottom: 11),
                 child: Row(
                   children: [
-                    const Icon(
-                      Icons.check_circle_outline,
-                      color: foodlyOrange,
-                      size: 19,
-                    ),
+                    Icon(Icons.check_circle_outline, color: orange, size: 19),
                     const SizedBox(width: 9),
                     Expanded(
                       child: Text(
                         feature,
-                        style: const TextStyle(
-                          color: foodlyGreen,
-                          fontSize: 13,
-                        ),
+                        style: TextStyle(color: secondaryText, fontSize: 13),
                       ),
                     ),
                   ],
@@ -473,7 +464,7 @@ class _RestaurantOffersScreenState extends State<RestaurantOffersScreen> {
               margin: EdgeInsets.all(10),
               child: Text(
                 offer.description,
-                style: const TextStyle(color: foodlyGreen, fontSize: 13),
+                style: TextStyle(color: secondaryText, fontSize: 13),
               ),
             ),
           ],

@@ -4,6 +4,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:foodly/Onboarding/onboarding_page.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/main.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -40,7 +41,7 @@ class _SplashScreenState extends State<SplashScreen>
     Timer(const Duration(milliseconds: 2600), () {
       if (!mounted) return;
 
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context).push(
         PageRouteBuilder(
           pageBuilder: (_, animation, secondaryAnimation) =>
               const OnboardingScreen(),
@@ -70,7 +71,7 @@ class _SplashScreenState extends State<SplashScreen>
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFF102D25), FoodlyApp.green, Color(0xFF081B16)],
+                colors: [Color(0xFF102D25), green, Color(0xFF081B16)],
               ),
             ),
           ),
@@ -88,25 +89,28 @@ class _SplashScreenState extends State<SplashScreen>
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: FoodlyApp.orange,
+                        color: background,
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: FoodlyApp.orange.withValues(alpha: 0.3),
+                            color: background.withValues(alpha: 0.3),
                             blurRadius: 35,
                             spreadRadius: 3,
                           ),
                         ],
+                        image: DecorationImage(
+                          image: AssetImage("assets/images/logo.png"),
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.restaurant_menu_rounded,
-                        size: 52,
-                        color: Colors.white,
-                      ),
+                      // child: const Icon(
+                      //   Icons.restaurant_menu_rounded,
+                      //   size: 52,
+                      //   color: Colors.white,
+                      // ),
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'Foodly',
+                      'Thiop',
                       style: TextStyle(
                         fontSize: 42,
                         fontWeight: FontWeight.w800,
@@ -128,7 +132,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child: LinearProgressIndicator(
                         minHeight: 3,
                         backgroundColor: Colors.white24,
-                        color: FoodlyApp.orange,
+                        color: orange,
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),

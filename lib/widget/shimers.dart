@@ -6,7 +6,7 @@ class RestaurantShimmer extends StatelessWidget {
 
   final int itemCount;
 
-  static const Color foodlyBackground = Color(0xFFFAF8F3);
+  static const Color background = Color(0xFFFAF8F3);
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +21,7 @@ class RestaurantShimmer extends StatelessWidget {
           child: Container(
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: foodlyBackground,
+              color: background,
               borderRadius: BorderRadius.circular(18),
             ),
             child: Column(

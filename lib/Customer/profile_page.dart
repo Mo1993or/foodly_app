@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/register_restaurant.dart';
+import 'package:foodly/Utils/theme.dart';
+import 'package:foodly/main.dart';
 
 class ProfilePage extends StatelessWidget {
   final VoidCallback onLogout;
 
   const ProfilePage({super.key, required this.onLogout});
-
-  static const Color orange = Color(0xFFF56624);
-  static const Color green = Color(0xFF173D32);
-  static const Color cream = Color(0xFFFAF8F3);
 
   void _openRegistration(BuildContext context) {
     Navigator.push(
@@ -20,7 +18,7 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: cream,
+      backgroundColor: background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 18, 20, 30),

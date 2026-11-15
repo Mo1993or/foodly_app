@@ -3,6 +3,9 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:foodly/Auth/login_screen.dart';
+import 'package:foodly/Restaurant/restaurant_add_edit_dish_screen.dart'
+    as FoodlyApp;
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/service/auth_service.dart';
 import 'package:foodly/service/restaurant_service.dart';
 import 'package:google_places_flutter/google_places_flutter.dart';
@@ -35,10 +38,6 @@ class _RestaurantRegistrationPageState
   final descriptionController = TextEditingController();
 
   final ImagePicker _imagePicker = ImagePicker();
-
-  final Color _orange = const Color(0xFFF56624);
-  final Color _green = const Color(0xFF173D32);
-  final Color _background = const Color(0xFFFAF8F3);
 
   File? _logo;
   String logoString = "";
@@ -148,7 +147,7 @@ class _RestaurantRegistrationPageState
       return;
     }
 
-    Color selectedColor = _orange;
+    Color selectedColor = orange;
 
     final result = await showDialog<Color>(
       context: context,
@@ -186,7 +185,7 @@ class _RestaurantRegistrationPageState
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: _orange,
+              backgroundColor: orange,
               foregroundColor: Colors.white,
             ),
             onPressed: () {
@@ -317,7 +316,7 @@ class _RestaurantRegistrationPageState
                         children: [
                           Icon(
                             Icons.location_on_rounded,
-                            color: _orange,
+                            color: orange,
                             size: 28,
                           ),
                           const SizedBox(width: 10),
@@ -328,7 +327,7 @@ class _RestaurantRegistrationPageState
                                 Text(
                                   'Emplacement du restaurant',
                                   style: TextStyle(
-                                    color: _green,
+                                    color: orange,
                                     fontSize: 17,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -360,7 +359,7 @@ class _RestaurantRegistrationPageState
                         isLatLngRequired: true,
                         inputDecoration: InputDecoration(
                           hintText: 'Rechercher un quartier, une rue...',
-                          prefixIcon: Icon(Icons.search_rounded, color: _green),
+                          prefixIcon: Icon(Icons.search_rounded, color: green),
                           filled: true,
                           fillColor: Colors.grey.shade100,
                           contentPadding: const EdgeInsets.symmetric(
@@ -423,10 +422,7 @@ class _RestaurantRegistrationPageState
                             ),
                             child: Row(
                               children: [
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  color: _orange,
-                                ),
+                                Icon(Icons.location_on_outlined, color: orange),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
@@ -483,7 +479,7 @@ class _RestaurantRegistrationPageState
                               child: Icon(
                                 Icons.location_pin,
                                 size: 48,
-                                color: _orange,
+                                color: orange,
                                 shadows: const [
                                   Shadow(
                                     color: Colors.black26,
@@ -509,7 +505,7 @@ class _RestaurantRegistrationPageState
                                     CameraUpdate.newLatLng(temporaryPosition),
                                   );
                                 },
-                                icon: Icon(Icons.my_location, color: _green),
+                                icon: Icon(Icons.my_location, color: green),
                               ),
                             ),
                           ),
@@ -537,7 +533,7 @@ class _RestaurantRegistrationPageState
                           Text(
                             'Coordonnées sélectionnées',
                             style: TextStyle(
-                              color: _green,
+                              color: green,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -562,7 +558,7 @@ class _RestaurantRegistrationPageState
                               icon: const Icon(Icons.check_circle_outline),
                               label: const Text('Confirmer cet emplacement'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: _orange,
+                                backgroundColor: orange,
                                 foregroundColor: Colors.white,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(15),
@@ -597,7 +593,7 @@ class _RestaurantRegistrationPageState
     return InputDecoration(
       labelText: label,
       hintText: hint,
-      prefixIcon: Icon(icon, color: _green),
+      prefixIcon: Icon(icon, color: green),
       suffixIcon: suffixIcon,
       filled: true,
       fillColor: Colors.white,
@@ -612,7 +608,7 @@ class _RestaurantRegistrationPageState
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(16),
-        borderSide: BorderSide(color: _orange, width: 1.5),
+        borderSide: BorderSide(color: orange, width: 1.5),
       ),
     );
   }
@@ -693,7 +689,7 @@ class _RestaurantRegistrationPageState
                 : IconButton(
                     onPressed: _openLocationPicker,
                     tooltip: 'Choisir sur la carte',
-                    icon: Icon(Icons.map_outlined, color: _orange),
+                    icon: Icon(Icons.map_outlined, color: orange),
                   ),
           ),
           validator: (value) {
@@ -711,13 +707,13 @@ class _RestaurantRegistrationPageState
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
             decoration: BoxDecoration(
-              color: _orange.withValues(alpha: 0.08),
+              color: orange.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: _orange.withValues(alpha: 0.25)),
+              border: Border.all(color: orange.withValues(alpha: 0.25)),
             ),
             child: Row(
               children: [
-                Icon(Icons.map_rounded, color: _orange, size: 23),
+                Icon(Icons.map_rounded, color: orange, size: 23),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -728,7 +724,7 @@ class _RestaurantRegistrationPageState
                             ? 'Emplacement sélectionné'
                             : 'Choisir sur la carte',
                         style: TextStyle(
-                          color: _green,
+                          color: green,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -746,7 +742,7 @@ class _RestaurantRegistrationPageState
                     ],
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios_rounded, size: 16, color: _orange),
+                Icon(Icons.arrow_forward_ios_rounded, size: 16, color: orange),
               ],
             ),
           ),
@@ -764,7 +760,7 @@ class _RestaurantRegistrationPageState
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: _green,
+            color: green,
           ),
         ),
         const SizedBox(height: 5),
@@ -789,7 +785,7 @@ class _RestaurantRegistrationPageState
                   : Icon(
                       Icons.add_a_photo_outlined,
                       size: 30,
-                      color: _green.withValues(alpha: 0.7),
+                      color: green.withValues(alpha: 0.7),
                     ),
             ),
             const SizedBox(width: 16),
@@ -801,8 +797,8 @@ class _RestaurantRegistrationPageState
                   _logo == null ? 'Ajouter un logo' : 'Changer le logo',
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: _green,
-                  side: BorderSide(color: _green.withValues(alpha: 0.4)),
+                  foregroundColor: green,
+                  side: BorderSide(color: green.withValues(alpha: 0.4)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -829,7 +825,7 @@ class _RestaurantRegistrationPageState
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            color: _green,
+            color: green,
           ),
         ),
         const SizedBox(height: 5),
@@ -854,7 +850,7 @@ class _RestaurantRegistrationPageState
                   : Icon(
                       Icons.add_a_photo_outlined,
                       size: 30,
-                      color: _green.withValues(alpha: 0.7),
+                      color: green.withValues(alpha: 0.7),
                     ),
             ),
             const SizedBox(width: 16),
@@ -868,8 +864,8 @@ class _RestaurantRegistrationPageState
                       : 'Changer la couverture',
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: _green,
-                  side: BorderSide(color: _green.withValues(alpha: 0.4)),
+                  foregroundColor: green,
+                  side: BorderSide(color: green.withValues(alpha: 0.4)),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -899,13 +895,13 @@ class _RestaurantRegistrationPageState
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: _green,
+                  color: green,
                 ),
               ),
             ),
             Text(
               '${_restaurantColors.length}/2',
-              style: TextStyle(color: _orange, fontWeight: FontWeight.bold),
+              style: TextStyle(color: orange, fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -977,9 +973,9 @@ class _RestaurantRegistrationPageState
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
-                        border: Border.all(color: _orange, width: 1.5),
+                        border: Border.all(color: orange, width: 1.5),
                       ),
-                      child: Icon(Icons.add, color: _orange, size: 28),
+                      child: Icon(Icons.add, color: orange, size: 28),
                     ),
                     const SizedBox(height: 6),
                     const Text('Ajouter', style: TextStyle(fontSize: 11)),
@@ -1019,10 +1015,10 @@ class _RestaurantRegistrationPageState
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: _orange.withValues(alpha: 0.1),
+                  color: orange.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(13),
                 ),
-                child: Icon(icon, color: _orange, size: 22),
+                child: Icon(icon, color: orange, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -1034,7 +1030,7 @@ class _RestaurantRegistrationPageState
                       style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.bold,
-                        color: _green,
+                        color: green,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -1106,6 +1102,9 @@ class _RestaurantRegistrationPageState
           "#" + element.toARGB32().toRadixString(16).substring(2).toUpperCase(),
         );
       }
+      if (colors.isEmpty) {
+        colors = ["#D34055", "#E9A1AA"];
+      }
       print("colors $colors");
       var data = {
         "ownerName": _ownerController.text.trim(),
@@ -1129,7 +1128,7 @@ class _RestaurantRegistrationPageState
       setState(() => _loading = false);
 
       _showMessage('Creation validé ! Connecte toi sur ton compte.');
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const RestaurantLoginScreen()),
       );
@@ -1143,19 +1142,19 @@ class _RestaurantRegistrationPageState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _background,
+      backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: _background,
+        backgroundColor: background,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.maybePop(context),
-          icon: Icon(Icons.arrow_back_ios_new, color: _green),
+          icon: Icon(Icons.arrow_back_ios_new, color: green),
         ),
         title: Text(
           'Devenir restaurateur',
           style: TextStyle(
-            color: _green,
+            color: green,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -1171,7 +1170,7 @@ class _RestaurantRegistrationPageState
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [_green, const Color(0xFF245B49)],
+                    colors: [green, const Color(0xFF245B49)],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -1249,7 +1248,7 @@ class _RestaurantRegistrationPageState
                   _buildColorSection(),
                   SizedBox(height: 16),
                   TextFormField(
-                    cursorColor: _orange,
+                    cursorColor: orange,
                     maxLines: 5,
                     controller: descriptionController,
                     decoration: InputDecoration(
@@ -1259,11 +1258,11 @@ class _RestaurantRegistrationPageState
                       contentPadding: const EdgeInsets.all(20),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(18),
-                        borderSide: BorderSide(color: _orange),
+                        borderSide: BorderSide(color: orange),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: _orange),
+                        borderSide: BorderSide(color: orange),
                       ),
                     ),
                   ),
@@ -1365,7 +1364,7 @@ class _RestaurantRegistrationPageState
                         _obscurePassword
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: _green,
+                        color: green,
                       ),
                     ),
                     validator: (value) {
@@ -1388,9 +1387,9 @@ class _RestaurantRegistrationPageState
                 child: ElevatedButton(
                   onPressed: _loading ? null : _registerRestaurant,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: _orange,
+                    backgroundColor: orange,
                     foregroundColor: Colors.white,
-                    disabledBackgroundColor: _orange.withValues(alpha: 0.5),
+                    disabledBackgroundColor: orange.withValues(alpha: 0.5),
                     elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(18),

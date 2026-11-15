@@ -1,11 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:foodly/Restaurant/restaurant_add_edit_dish_screen.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-const Color foodlyOrange = Color(0xFFF56624);
-const Color foodlyGreen = Color(0xFF173D32);
-const Color foodlyBackground = Color(0xFFFAF8F3);
 
 class CartItem {
   final String restaurantId;
@@ -206,15 +204,15 @@ class CartScreen extends StatelessWidget {
         final items = foodlyCart.items;
 
         return Scaffold(
-          backgroundColor: foodlyBackground,
+          backgroundColor: background,
           appBar: AppBar(
-            backgroundColor: foodlyBackground,
+            backgroundColor: background,
             elevation: 0,
-            title: const Text(
+            title: Text(
               'Mon panier',
-              style: TextStyle(color: foodlyGreen, fontWeight: FontWeight.bold),
+              style: TextStyle(color: green, fontWeight: FontWeight.bold),
             ),
-            iconTheme: const IconThemeData(color: foodlyGreen),
+            iconTheme: IconThemeData(color: green),
           ),
           body: items.isEmpty
               ? const _EmptyCart()
@@ -240,12 +238,12 @@ class CartScreen extends StatelessWidget {
                                   width: 64,
                                   height: 64,
                                   decoration: BoxDecoration(
-                                    color: foodlyOrange.withValues(alpha: 0.1),
+                                    color: orange.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(14),
                                   ),
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.fastfood_rounded,
-                                    color: foodlyOrange,
+                                    color: orange,
                                     size: 30,
                                   ),
                                 ),
@@ -257,10 +255,10 @@ class CartScreen extends StatelessWidget {
                                     children: [
                                       Text(
                                         item.name,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 15,
-                                          color: foodlyGreen,
+                                          color: green,
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -274,8 +272,8 @@ class CartScreen extends StatelessWidget {
                                       const SizedBox(height: 8),
                                       Text(
                                         '${item.subtotal} FCFA',
-                                        style: const TextStyle(
-                                          color: foodlyOrange,
+                                        style: TextStyle(
+                                          color: secondaryText,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
@@ -353,10 +351,10 @@ class _QuantityButton extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: foodlyBackground,
+          color: background,
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, size: 16, color: foodlyGreen),
+        child: Icon(icon, size: 16, color: green),
       ),
     );
   }
@@ -388,20 +386,20 @@ class _CartSummary extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Total à payer',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 17,
-                  color: foodlyGreen,
+                  color: green,
                 ),
               ),
               Text(
                 '${foodlyCart.totalPrice} FCFA',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 19,
-                  color: foodlyOrange,
+                  color: secondaryText,
                 ),
               ),
             ],
@@ -413,7 +411,7 @@ class _CartSummary extends StatelessWidget {
             child: ElevatedButton(
               onPressed: foodlyCart.items.isEmpty ? null : onCheckout,
               style: ElevatedButton.styleFrom(
-                backgroundColor: foodlyOrange,
+                backgroundColor: secondaryText,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -448,10 +446,10 @@ class _EmptyCart extends StatelessWidget {
               color: Colors.grey.shade400,
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'Ton panier est vide',
               style: TextStyle(
-                color: foodlyGreen,
+                color: green,
                 fontWeight: FontWeight.bold,
                 fontSize: 21,
               ),

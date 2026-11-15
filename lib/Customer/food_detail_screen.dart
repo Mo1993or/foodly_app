@@ -1,13 +1,11 @@
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:foodly/Restaurant/restaurant_add_edit_dish_screen.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/dishes_model.dart';
 import 'package:foodly/model/restaurant_model.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-
-const Color foodlyOrange = Color(0xFFF56624);
-const Color foodlyGreen = Color(0xFF173D32);
-const Color foodlyBackground = Color(0xFFFAF8F3);
 
 class RestaurantDetailScreen extends StatefulWidget {
   final RestaurantModel restaurant;
@@ -100,14 +98,14 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
     final position = LatLng(latitude, longitude);
 
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       body: CustomScrollView(
         slivers: [
           // Même image que sur la Home page
           SliverAppBar(
             expandedHeight: 270,
             pinned: true,
-            backgroundColor: foodlyGreen,
+            backgroundColor: green,
             foregroundColor: Colors.white,
             title: const Text('Restaurant'),
             flexibleSpace: FlexibleSpaceBar(
@@ -140,10 +138,10 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                 // Nom et note
                 Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
-                    color: foodlyGreen,
+                    color: secondaryText,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -187,12 +185,12 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                         height: 46,
                         width: 46,
                         decoration: BoxDecoration(
-                          color: foodlyOrange.withValues(alpha: 0.12),
+                          color: orange.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(14),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.delivery_dining_rounded,
-                          color: foodlyOrange,
+                          color: orange,
                           size: 27,
                         ),
                       ),
@@ -208,8 +206,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                             const SizedBox(height: 4),
                             Text(
                               deliveryTime,
-                              style: const TextStyle(
-                                color: foodlyGreen,
+                              style: TextStyle(
+                                color: green,
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -223,12 +221,12 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
 
                 const SizedBox(height: 26),
 
-                const Text(
+                Text(
                   'À propos du restaurant',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: foodlyGreen,
+                    color: secondaryText,
                   ),
                 ),
                 const SizedBox(height: 9),
@@ -245,29 +243,22 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                 const SizedBox(height: 8),
                 Text(
                   cuisine,
-                  style: const TextStyle(
-                    color: foodlyGreen,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(color: orange, fontWeight: FontWeight.w600),
                 ),
 
                 const SizedBox(height: 28),
 
                 // Localisation Google Maps
-                const Row(
+                Row(
                   children: [
-                    Icon(
-                      Icons.location_on_rounded,
-                      color: foodlyOrange,
-                      size: 25,
-                    ),
+                    Icon(Icons.location_on_rounded, color: orange, size: 25),
                     SizedBox(width: 8),
                     Text(
                       'Où nous trouver ?',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w800,
-                        color: foodlyGreen,
+                        color: secondaryText,
                       ),
                     ),
                   ],
@@ -307,8 +298,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                   icon: const Icon(Icons.directions_rounded),
                   label: const Text('Obtenir l’itinéraire'),
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: foodlyGreen,
-                    side: const BorderSide(color: foodlyGreen),
+                    foregroundColor: green,
+                    side: BorderSide(color: green),
                     minimumSize: const Size(double.infinity, 52),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
@@ -321,22 +312,22 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                 // Aperçu du menu
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
                         'Quelques plats du menu',
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
-                          color: foodlyGreen,
+                          color: secondaryText,
                         ),
                       ),
                     ),
                     if (widget.dishes.isNotEmpty)
                       TextButton(
                         onPressed: _openMenu,
-                        child: const Text(
+                        child: Text(
                           'Voir tout',
-                          style: TextStyle(color: foodlyOrange),
+                          style: TextStyle(color: orange),
                         ),
                       ),
                   ],
@@ -369,7 +360,7 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: foodlyOrange,
+                    backgroundColor: green,
                     foregroundColor: Colors.white,
                     minimumSize: const Size(double.infinity, 56),
                     shape: RoundedRectangleBorder(
@@ -410,18 +401,18 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: foodlyGreen.withValues(alpha: 0.08),
+        color: green.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: foodlyGreen, size: 16),
+          Icon(icon, color: green, size: 16),
           const SizedBox(width: 6),
           Text(
             label,
-            style: const TextStyle(
-              color: foodlyGreen,
+            style: TextStyle(
+              color: green,
               fontWeight: FontWeight.w600,
               fontSize: 12,
             ),
@@ -450,16 +441,16 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
               height: 72,
               width: 78,
               child: image.isEmpty
-                  ? const ColoredBox(
+                  ? ColoredBox(
                       color: Color(0xFFFFE9D9),
-                      child: Icon(Icons.restaurant, color: foodlyOrange),
+                      child: Icon(Icons.restaurant, color: orange),
                     )
                   : Image.network(
                       image,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const ColoredBox(
+                      errorBuilder: (_, __, ___) => ColoredBox(
                         color: Color(0xFFFFE9D9),
-                        child: Icon(Icons.restaurant, color: foodlyOrange),
+                        child: Icon(Icons.restaurant, color: orange),
                       ),
                     ),
             ),
@@ -471,8 +462,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
               children: [
                 Text(
                   dish.name.toString(),
-                  style: const TextStyle(
-                    color: foodlyGreen,
+                  style: TextStyle(
+                    color: green,
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
                   ),
@@ -480,8 +471,8 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
                 const SizedBox(height: 7),
                 Text(
                   '$price FCFA',
-                  style: const TextStyle(
-                    color: foodlyOrange,
+                  style: TextStyle(
+                    color: secondaryText,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -516,10 +507,10 @@ class RestaurantMenuScreen extends StatelessWidget {
     final color = restaurant.colors[0].toString().toColor;
 
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: foodlyBackground,
-        foregroundColor: foodlyGreen,
+        backgroundColor: background,
+        foregroundColor: green,
         elevation: 0,
         title: const Text(
           'Notre menu',
@@ -567,8 +558,8 @@ class RestaurantMenuScreen extends StatelessWidget {
                     children: [
                       Text(
                         name,
-                        style: const TextStyle(
-                          color: foodlyGreen,
+                        style: TextStyle(
+                          color: green,
                           fontSize: 20,
                           fontWeight: FontWeight.w800,
                         ),
@@ -584,12 +575,12 @@ class RestaurantMenuScreen extends StatelessWidget {
               ],
             ),
           ),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Text(
               'Tous nos plats',
               style: TextStyle(
-                color: foodlyGreen,
+                color: secondaryText,
                 fontWeight: FontWeight.w800,
                 fontSize: 21,
               ),
@@ -630,11 +621,11 @@ class RestaurantMenuScreen extends StatelessWidget {
                                 height: 100,
                                 width: 105,
                                 child: dishImage.isEmpty
-                                    ? const ColoredBox(
+                                    ? ColoredBox(
                                         color: Color(0xFFFFE9D9),
                                         child: Icon(
                                           Icons.restaurant,
-                                          color: foodlyOrange,
+                                          color: orange,
                                           size: 35,
                                         ),
                                       )
@@ -642,11 +633,11 @@ class RestaurantMenuScreen extends StatelessWidget {
                                         dishImage,
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) =>
-                                            const ColoredBox(
+                                            ColoredBox(
                                               color: Color(0xFFFFE9D9),
                                               child: Icon(
                                                 Icons.restaurant,
-                                                color: foodlyOrange,
+                                                color: orange,
                                                 size: 35,
                                               ),
                                             ),
@@ -660,19 +651,19 @@ class RestaurantMenuScreen extends StatelessWidget {
                                 children: [
                                   Text(
                                     dish.name.toString(),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
-                                      color: foodlyGreen,
+                                      color: green,
                                     ),
                                   ),
                                   const SizedBox(height: 10),
                                   Text(
                                     '${dish.price} FCFA',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w800,
-                                      color: foodlyOrange,
+                                      color: secondaryText,
                                     ),
                                   ),
                                 ],

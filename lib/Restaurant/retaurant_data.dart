@@ -2,10 +2,6 @@ import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 
-const Color foodlyOrange = Color(0xFFF56624);
-const Color foodlyGreen = Color(0xFF173D32);
-const Color foodlyBackground = Color(0xFFFAF8F3);
-
 class RestaurantDish {
   final String id;
   String name;

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/customer_order_store.dart';
-
-const Color foodlyOrange = Color(0xFFF56624);
-const Color foodlyGreen = Color(0xFF173D32);
-const Color foodlyBackground = Color(0xFFFAF8F3);
+import 'package:foodly/Restaurant/restaurant_add_edit_dish_screen.dart';
+import 'package:foodly/Utils/theme.dart';
 
 class MyOrdersScreen extends StatelessWidget {
   const MyOrdersScreen({super.key});
@@ -16,13 +14,14 @@ class MyOrdersScreen extends StatelessWidget {
         final orders = clientOrdersStore.orders;
 
         return Scaffold(
-          backgroundColor: foodlyBackground,
+          backgroundColor: background,
           appBar: AppBar(
-            backgroundColor: foodlyBackground,
+            backgroundColor: background,
             elevation: 0,
-            title: const Text(
+            leading: Container(),
+            title: Text(
               'Mes commandes',
-              style: TextStyle(color: foodlyGreen, fontWeight: FontWeight.bold),
+              style: TextStyle(color: green, fontWeight: FontWeight.bold),
             ),
           ),
           body: orders.isEmpty
@@ -78,8 +77,8 @@ class _OrderCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Commande #${order.id}',
-                    style: const TextStyle(
-                      color: foodlyGreen,
+                    style: TextStyle(
+                      color: secondaryText,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -95,8 +94,8 @@ class _OrderCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               '${order.totalPrice} FCFA',
-              style: const TextStyle(
-                color: foodlyOrange,
+              style: TextStyle(
+                color: orange,
                 fontSize: 19,
                 fontWeight: FontWeight.bold,
               ),
@@ -107,18 +106,15 @@ class _OrderCard extends StatelessWidget {
               style: const TextStyle(color: Colors.black45, fontSize: 12),
             ),
             const SizedBox(height: 10),
-            const Row(
+            Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
                   'Voir les détails',
-                  style: TextStyle(
-                    color: foodlyGreen,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(color: green, fontWeight: FontWeight.w600),
                 ),
                 SizedBox(width: 5),
-                Icon(Icons.arrow_forward_ios, size: 14, color: foodlyGreen),
+                Icon(Icons.arrow_forward_ios, size: 14, color: green),
               ],
             ),
           ],
@@ -141,13 +137,13 @@ class OrderDetailScreen extends StatelessWidget {
         final currentOrder = clientOrdersStore.findById(order.id) ?? order;
 
         return Scaffold(
-          backgroundColor: foodlyBackground,
+          backgroundColor: background,
           appBar: AppBar(
-            backgroundColor: foodlyBackground,
+            backgroundColor: background,
             elevation: 0,
-            title: const Text(
+            title: Text(
               'Détails de la commande',
-              style: TextStyle(color: foodlyGreen, fontWeight: FontWeight.bold),
+              style: TextStyle(color: green, fontWeight: FontWeight.bold),
             ),
           ),
           body: ListView(
@@ -164,9 +160,9 @@ class OrderDetailScreen extends StatelessWidget {
                   children: [
                     Text(
                       'Commande #${currentOrder.id}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
-                        color: foodlyGreen,
+                        color: secondaryText,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -178,11 +174,11 @@ class OrderDetailScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              const Text(
+              Text(
                 'Articles commandés',
                 style: TextStyle(
                   fontSize: 19,
-                  color: foodlyGreen,
+                  color: secondaryText,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -203,11 +199,7 @@ class OrderDetailScreen extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.restaurant_menu,
-                        color: foodlyOrange,
-                        size: 30,
-                      ),
+                      Icon(Icons.restaurant_menu, color: orange, size: 30),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -232,8 +224,8 @@ class OrderDetailScreen extends StatelessWidget {
                       ),
                       Text(
                         '$subtotal FCFA',
-                        style: const TextStyle(
-                          color: foodlyGreen,
+                        style: TextStyle(
+                          color: green,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -251,10 +243,10 @@ class OrderDetailScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Livraison',
                       style: TextStyle(
-                        color: foodlyGreen,
+                        color: green,
                         fontWeight: FontWeight.bold,
                         fontSize: 17,
                       ),
@@ -277,8 +269,8 @@ class OrderDetailScreen extends StatelessWidget {
                     const SizedBox(height: 6),
                     Text(
                       '${currentOrder.totalPrice} FCFA',
-                      style: const TextStyle(
-                        color: foodlyOrange,
+                      style: TextStyle(
+                        color: orange,
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
                       ),
@@ -304,8 +296,8 @@ class _StatusBadge extends StatelessWidget {
     final Color color = switch (status) {
       'Acceptée' => Colors.blue,
       'Refusée' => Colors.red,
-      'En préparation' => foodlyOrange,
-      'Prête' => foodlyGreen,
+      'En préparation' => orange,
+      'Prête' => green,
       'Terminée' => Colors.grey,
       _ => Colors.orange,
     };
@@ -345,12 +337,12 @@ class _EmptyOrders extends StatelessWidget {
               color: Colors.grey.shade400,
             ),
             const SizedBox(height: 18),
-            const Text(
+            Text(
               'Aucune commande pour le moment',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 20,
-                color: foodlyGreen,
+                color: green,
                 fontWeight: FontWeight.bold,
               ),
             ),

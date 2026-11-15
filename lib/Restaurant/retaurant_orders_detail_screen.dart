@@ -1,29 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/food_detail_screen.dart';
-import 'package:foodly/Restaurant/retaurant_data.dart'
-    hide foodlyGreen, foodlyOrange, foodlyBackground;
+import 'package:foodly/Restaurant/retaurant_data.dart';
+import 'package:foodly/Utils/network.dart';
+import 'package:foodly/Utils/theme.dart';
+import 'package:foodly/main.dart';
 import 'package:foodly/model/order_model.dart';
+import 'package:foodly/model/restaurant_model.dart';
 
 class RestaurantOrderDetailScreen extends StatelessWidget {
   final OrderModel order;
   final String statusTranslate;
+  final RestaurantModel? restaurant;
 
   const RestaurantOrderDetailScreen({
     super.key,
     required this.order,
     required this.statusTranslate,
+    required this.restaurant,
   });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: foodlyBackground,
+        backgroundColor: background,
         title: Text(
           order.id,
-          style: const TextStyle(
-            color: foodlyGreen,
+          style: TextStyle(
+            color: restaurant?.colors.first.toString().toColor(),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -34,7 +39,7 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: foodlyGreen,
+              color: restaurant?.colors.first.toString().toColor(),
               borderRadius: BorderRadius.circular(22),
             ),
             child: Column(
@@ -62,10 +67,10 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Informations du client',
             style: TextStyle(
-              color: foodlyGreen,
+              color: restaurant?.colors.first.toString().toColor(),
               fontSize: 19,
               fontWeight: FontWeight.bold,
             ),
@@ -83,10 +88,10 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
             '${DateTime.parse(order.createdAt).minute.toString().padLeft(2, '0')}',
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             'Plats commandés',
             style: TextStyle(
-              color: foodlyGreen,
+              color: restaurant?.colors.first.toString().toColor(),
               fontSize: 19,
               fontWeight: FontWeight.bold,
             ),
@@ -114,7 +119,7 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
                         image: NetworkImage(item.imageUrl),
                         fit: .cover,
                       ),
-                      color: foodlyOrange.withValues(alpha: 0.12),
+                      color: orange.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
@@ -136,8 +141,8 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
                   ),
                   Text(
                     formatCfa(quantity * price),
-                    style: const TextStyle(
-                      color: foodlyGreen,
+                    style: TextStyle(
+                      color: restaurant?.colors.first.toString().toColor(),
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -153,7 +158,7 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: foodlyOrange,
+                backgroundColor: orange,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.all(16),
               ),
@@ -175,7 +180,7 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: foodlyGreen,
+                backgroundColor: restaurant?.colors.first.toString().toColor(),
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.all(16),
               ),
@@ -201,7 +206,7 @@ class RestaurantOrderDetailScreen extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: foodlyOrange),
+          Icon(icon, color: orange),
           const SizedBox(width: 12),
           Expanded(child: Text(value)),
         ],

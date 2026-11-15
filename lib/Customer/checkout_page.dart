@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:foodly/Customer/customer_order_store.dart';
 import 'package:foodly/Customer/customer_profil_store.dart';
 import 'package:foodly/Customer/panier_page.dart';
+import 'package:foodly/Restaurant/restaurant_add_edit_dish_screen.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/service/order_service.dart';
-
-const Color foodlyOrange = Color(0xFFF56624);
-const Color foodlyGreen = Color(0xFF173D32);
-const Color foodlyBackground = Color(0xFFFAF8F3);
 
 class CheckoutScreen extends StatefulWidget {
   const CheckoutScreen({super.key});
@@ -143,7 +141,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       setState(() => _isSubmitting = false);
       var result = await OrdersService().creatOrders(data);
 
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => OrderConfirmationScreen(
@@ -163,27 +161,27 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Finaliser ma commande',
-          style: TextStyle(color: foodlyGreen, fontWeight: FontWeight.bold),
+          style: TextStyle(color: green, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: foodlyBackground,
+        backgroundColor: background,
         elevation: 0,
-        iconTheme: const IconThemeData(color: foodlyGreen),
+        iconTheme: IconThemeData(color: green),
       ),
       body: Form(
         key: _formKey,
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
-            const Text(
+            Text(
               'Tes coordonnées',
               style: TextStyle(
                 fontSize: 21,
                 fontWeight: FontWeight.bold,
-                color: foodlyGreen,
+                color: green,
               ),
             ),
             const SizedBox(height: 8),
@@ -248,15 +246,15 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: const Row(
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.info_outline, color: foodlyOrange),
+                  Icon(Icons.info_outline, color: orange),
                   SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Vérifie ton numéro et ton adresse avant de confirmer ta commande.',
-                      style: TextStyle(color: foodlyGreen, height: 1.5),
+                      style: TextStyle(color: green, height: 1.5),
                     ),
                   ),
                 ],
@@ -268,7 +266,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submitOrder,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: foodlyOrange,
+                  backgroundColor: orange,
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -303,7 +301,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(fontWeight: FontWeight.w600, color: foodlyGreen),
+        style: TextStyle(fontWeight: FontWeight.w600, color: secondaryText),
       ),
     );
   }
@@ -323,7 +321,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       maxLines: maxLines,
       decoration: InputDecoration(
         hintText: hint,
-        prefixIcon: Icon(icon, color: foodlyGreen),
+        prefixIcon: Icon(icon, color: green),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
@@ -349,7 +347,7 @@ class OrderConfirmationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -361,21 +359,21 @@ class OrderConfirmationScreen extends StatelessWidget {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: foodlyGreen.withValues(alpha: 0.1),
+                    color: green.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.check_circle_outline,
-                    color: foodlyGreen,
+                    color: green,
                     size: 64,
                   ),
                 ),
                 const SizedBox(height: 28),
-                const Text(
+                Text(
                   'Merci pour ta commande !',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: foodlyGreen,
+                    color: green,
                     fontSize: 25,
                     fontWeight: FontWeight.bold,
                   ),
@@ -406,7 +404,7 @@ class OrderConfirmationScreen extends StatelessWidget {
                       Navigator.of(context).popUntil((route) => route.isFirst);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: foodlyOrange,
+                      backgroundColor: orange,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),

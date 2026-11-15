@@ -3,8 +3,10 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/services.dart';
 import 'package:foodly/Restaurant/restaurant_offer_screen.dart';
 import 'package:foodly/Restaurant/restaurant_profil_screen.dart';
+import 'package:foodly/Restaurant/restaurant_profil_screen.dart' as FoodlyApp;
 import 'package:foodly/Restaurant/retaurant_data.dart';
 import 'package:foodly/Utils/network.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/dashboard_model.dart';
 import 'package:foodly/model/offer_model.dart';
 import 'package:foodly/model/restaurant_model.dart';
@@ -36,10 +38,6 @@ class RestaurantDashboardScreen extends StatefulWidget {
 }
 
 class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
-  static const Color orange = Color(0xFFF56624);
-  static const Color green = Color(0xFF173D32);
-  static const Color background = Color(0xFFFAF8F3);
-
   int _selectedIndex = 0;
 
   List<SubscriptionModel> listSub = [];
@@ -324,7 +322,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                   '$availableDishes/${dishes.length}',
                   'Plats actifs au menu',
                   Icons.fastfood_rounded,
-                  green,
+                  widget.restaurant!.colors.first.toString().toColor(),
                 ),
                 _statCard(
                   'Panier moyen',
@@ -376,7 +374,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(19),
       ),
-      child: const Column(
+      child: Column(
         children: [
           CircularProgressIndicator(color: orange),
           SizedBox(height: 12),
@@ -498,7 +496,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                   children: [
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'ACTION REQUISE',
                             style: TextStyle(
@@ -519,8 +517,10 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                       isVerification
                           ? 'Votre paiement est en cours de vérification'
                           : 'Votre offre est en attente de paiement',
-                      style: const TextStyle(
-                        color: green,
+                      style: TextStyle(
+                        color: widget.restaurant?.colors.first
+                            .toString()
+                            .toColor(),
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                         height: 1.3,
@@ -547,7 +547,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
             _alertButton(
               label: 'Payer maintenant',
               icon: Icons.payment_rounded,
-              color: orange,
+              color: widget.restaurant!.colors.first.toString().toColor(),
               onPressed: () => openWavePayment(context),
             ),
           ],
@@ -565,7 +565,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
           _alertButton(
             label: 'Appelez maintenant',
             icon: Icons.call,
-            color: green,
+            color: widget.restaurant!.colors.first.toString().toColor(),
             onPressed: () => _makePhoneCall("+221773123189"),
           ),
           const SizedBox(height: 11),
@@ -672,8 +672,10 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                     const SizedBox(height: 5),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        color: green,
+                      style: TextStyle(
+                        color: widget.restaurant?.colors.first
+                            .toString()
+                            .toColor(),
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
@@ -799,18 +801,23 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: green,
+            color: widget.restaurant?.colors.first.toString().toColor(),
             borderRadius: BorderRadius.circular(16),
+            image: DecorationImage(
+              image: (widget.restaurant?.logoUrl != "")
+                  ? NetworkImage(widget.restaurant?.logoUrl ?? "")
+                  : AssetImage("assets/images/logo.png"),
+            ),
           ),
-          child: const Icon(Icons.restaurant, color: Colors.white, size: 27),
+          // child: const Icon(Icons.restaurant, color: Colors.white, size: 27),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'FOODLY BUSINESS',
+              Text(
+                'THIOP BUSINESS',
                 style: TextStyle(
                   color: orange,
                   fontSize: 10,
@@ -819,13 +826,13 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                 ),
               ),
               Text(
-                restaurantData.name,
+                widget.restaurant?.name ?? "",
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 19,
                   fontWeight: FontWeight.bold,
-                  color: green,
+                  color: secondaryText,
                 ),
               ),
             ],
@@ -833,7 +840,10 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
         ),
         IconButton(
           onPressed: () => setState(() => _selectedIndex = 3),
-          icon: const Icon(Icons.settings_outlined, color: green),
+          icon: Icon(
+            Icons.settings_outlined,
+            color: widget.restaurant?.colors.first.toString().toColor(),
+          ),
         ),
       ],
     );
@@ -848,8 +858,11 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
       width: double.infinity,
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [green, Color(0xFF285849)],
+        gradient: LinearGradient(
+          colors: [
+            ?widget.restaurant?.colors.first.toString().toColor(),
+            Color(0xFF285849),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -901,7 +914,9 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                   icon: const Icon(Icons.add, size: 18),
                   label: const Text('Ajouter un plat'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: orange,
+                    backgroundColor: widget.restaurant?.colors.first
+                        .toString()
+                        .toColor(),
                     foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(vertical: 13),
                     shape: RoundedRectangleBorder(
@@ -937,8 +952,8 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: green,
+          style: TextStyle(
+            color: secondaryText,
             fontSize: 19,
             fontWeight: FontWeight.bold,
           ),
@@ -983,8 +998,8 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: green,
+            style: TextStyle(
+              color: secondaryText,
               fontSize: 21,
               fontWeight: FontWeight.bold,
             ),
@@ -996,8 +1011,8 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                 title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: green,
+                style: TextStyle(
+                  color: widget.restaurant?.colors.first.toString().toColor(),
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1044,10 +1059,10 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Chiffre d’affaires',
             style: TextStyle(
-              color: green,
+              color: secondaryText,
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
@@ -1060,8 +1075,8 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
           const SizedBox(height: 18),
           Text(
             '${_formatAmount(revenue)} ',
-            style: const TextStyle(
-              color: green,
+            style: TextStyle(
+              color: widget.restaurant?.colors.first.toString().toColor(),
               fontSize: 24,
               fontWeight: FontWeight.bold,
             ),
@@ -1203,10 +1218,10 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Répartition des commandes',
             style: TextStyle(
-              color: green,
+              color: secondaryText,
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
@@ -1250,13 +1265,16 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(color: green, fontSize: 12),
+                style: TextStyle(
+                  color: widget.restaurant?.colors.first.toString().toColor(),
+                  fontSize: 12,
+                ),
               ),
             ),
             Text(
               '$count',
-              style: const TextStyle(
-                color: green,
+              style: TextStyle(
+                color: widget.restaurant?.colors.first.toString().toColor(),
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
@@ -1289,11 +1307,11 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Commandes récentes',
                 style: TextStyle(
-                  color: green,
+                  color: secondaryText,
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                 ),
@@ -1301,7 +1319,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
             ),
             TextButton(
               onPressed: () => setState(() => _selectedIndex = 1),
-              child: const Text(
+              child: Text(
                 'Tout voir',
                 style: TextStyle(color: orange, fontWeight: FontWeight.bold),
               ),
@@ -1332,10 +1350,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                       color: orange.withValues(alpha: 0.10),
                       borderRadius: BorderRadius.circular(13),
                     ),
-                    child: const Icon(
-                      Icons.receipt_long_rounded,
-                      color: orange,
-                    ),
+                    child: Icon(Icons.receipt_long_rounded, color: orange),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -1346,8 +1361,10 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                           order.id.length > 12
                               ? '#${order.id.substring(order.id.length - 8)}'
                               : '#${order.id}',
-                          style: const TextStyle(
-                            color: green,
+                          style: TextStyle(
+                            color: widget.restaurant?.colors.first
+                                .toString()
+                                .toColor(),
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
                           ),
@@ -1384,9 +1401,9 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    '${_formatAmount(order.total)} F',
-                    style: const TextStyle(
-                      color: green,
+                    '${_formatAmount(order.total)} ',
+                    style: TextStyle(
+                      color: secondaryText,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -1432,10 +1449,10 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Votre menu',
             style: TextStyle(
-              color: green,
+              color: widget.restaurant?.colors.first.toString().toColor(),
               fontSize: 17,
               fontWeight: FontWeight.bold,
             ),
@@ -1443,7 +1460,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
           const SizedBox(height: 8),
           Text(
             '$available plats disponibles sur $total',
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
+            style: TextStyle(color: Colors.grey, fontSize: 12),
           ),
           const SizedBox(height: 14),
           ClipRRect(
@@ -1452,7 +1469,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
               value: ratio,
               minHeight: 9,
               backgroundColor: const Color(0xFFF0F0F0),
-              valueColor: const AlwaysStoppedAnimation<Color>(orange),
+              valueColor: AlwaysStoppedAnimation<Color>(orange),
             ),
           ),
           const SizedBox(height: 15),
@@ -1463,8 +1480,12 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
               icon: const Icon(Icons.edit_outlined),
               label: const Text('Gérer mon menu'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: green,
-                side: const BorderSide(color: green),
+                foregroundColor: widget.restaurant?.colors.first
+                    .toString()
+                    .toColor(),
+                side: BorderSide(
+                  color: widget.restaurant!.colors.first.toString().toColor(),
+                ),
                 padding: const EdgeInsets.symmetric(vertical: 13),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -1494,7 +1515,9 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
             restaurantData.isOpen
                 ? Icons.check_circle_rounded
                 : Icons.pause_circle_filled_rounded,
-            color: restaurantData.isOpen ? Colors.green : Colors.red,
+            color: restaurantData.isOpen
+                ? widget.restaurant?.colors.first.toString().toColor()
+                : Colors.red,
             size: 30,
           ),
           const SizedBox(width: 12),
@@ -1502,10 +1525,10 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Statut du restaurant',
                   style: TextStyle(
-                    color: green,
+                    color: widget.restaurant?.colors.first.toString().toColor(),
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),

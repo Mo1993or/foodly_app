@@ -3,6 +3,7 @@ import 'package:foodly/Customer/customer_page.dart';
 import 'package:foodly/Customer/food_detail_screen.dart';
 import 'package:foodly/Restaurant/restaurant_dashbord_screen.dart';
 import 'package:foodly/Restaurant/restaurant_offer_screen.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/restaurant_model.dart';
 import 'package:foodly/service/auth_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -114,7 +115,7 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -128,14 +129,17 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: foodlyGreen,
+                    color: green,
                     borderRadius: BorderRadius.circular(20),
+                    image: DecorationImage(
+                      image: AssetImage("assets/images/logo.png"),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.restaurant,
-                    color: Colors.white,
-                    size: 34,
-                  ),
+                  // child: const Icon(
+                  //   Icons.restaurant,
+                  //   color: Colors.white,
+                  //   size: 34,
+                  // ),
                 ),
                 const SizedBox(height: 28),
                 const Text(
@@ -143,7 +147,7 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
                   style: TextStyle(
                     fontSize: 29,
                     fontWeight: FontWeight.bold,
-                    color: foodlyGreen,
+                    color: green,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -159,10 +163,7 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
                 const SizedBox(height: 32),
                 const Text(
                   'Adresse e-mail',
-                  style: TextStyle(
-                    color: foodlyGreen,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(color: green, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 9),
                 TextFormField(
@@ -189,10 +190,7 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
                 const SizedBox(height: 22),
                 const Text(
                   'Mot de passe',
-                  style: TextStyle(
-                    color: foodlyGreen,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(color: green, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 9),
                 TextFormField(
@@ -243,7 +241,7 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
                     },
                     child: const Text(
                       'Mot de passe oublié ?',
-                      style: TextStyle(color: foodlyOrange),
+                      style: TextStyle(color: orange),
                     ),
                   ),
                 ),
@@ -254,7 +252,7 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: foodlyOrange,
+                      backgroundColor: orange,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(17),
@@ -308,7 +306,7 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
   InputDecoration _decoration({required String hint, required IconData icon}) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon, color: foodlyOrange),
+      prefixIcon: Icon(icon, color: orange),
       filled: true,
       fillColor: Colors.white,
       border: OutlineInputBorder(
@@ -321,7 +319,7 @@ class _RestaurantLoginScreenState extends State<RestaurantLoginScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(15),
-        borderSide: const BorderSide(color: foodlyOrange),
+        borderSide: const BorderSide(color: orange),
       ),
     );
   }

@@ -1,15 +1,18 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:foodly/Restaurant/restaurant_add_edit_dish_screen.dart'
+    as Foodly;
 import 'package:foodly/Restaurant/restaurant_dashbord_screen.dart';
+import 'package:foodly/Restaurant/restaurant_profil_screen.dart' as FoodlyApp;
+import 'package:foodly/Utils/network.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/dishes_model.dart';
 import 'package:foodly/model/restaurant_model.dart';
 import 'package:foodly/service/auth_service.dart';
 import 'package:foodly/service/restaurant_service.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:foodly/Customer/food_detail_screen.dart';
-import 'package:foodly/Restaurant/retaurant_data.dart'
-    hide foodlyBackground, foodlyGreen, foodlyOrange;
 
 class RestaurantAddEditDishScreen extends StatefulWidget {
   final DishesModel? dish;
@@ -172,7 +175,7 @@ class _RestaurantAddEditDishScreenState
       // }
       var result = await RestaurantService().registerDishes(dish);
       setState(() => _isSaving = false);
-      Navigator.pushReplacement(
+      Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => RestaurantDashboardScreen(
@@ -209,10 +212,10 @@ class _RestaurantAddEditDishScreenState
             width: double.infinity,
             height: 220,
             decoration: BoxDecoration(
-              color: foodlyOrange.withValues(alpha: 0.08),
+              color: orange.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(22),
               border: Border.all(
-                color: foodlyOrange.withValues(alpha: 0.35),
+                color: orange.withValues(alpha: 0.35),
                 width: 1.2,
               ),
             ),
@@ -259,8 +262,12 @@ class _RestaurantAddEditDishScreenState
                       : 'Choisir dans la galerie',
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: foodlyGreen,
-                  side: const BorderSide(color: foodlyGreen),
+                  foregroundColor: widget.restaurant?.colors.first
+                      .toString()
+                      .toColor(),
+                  side: BorderSide(
+                    color: widget.restaurant!.colors.first.toString().toColor(),
+                  ),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -298,20 +305,20 @@ class _RestaurantAddEditDishScreenState
         Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: foodlyOrange.withValues(alpha: 0.12),
+            color: orange.withValues(alpha: 0.12),
             shape: BoxShape.circle,
           ),
-          child: const Icon(
+          child: Icon(
             Icons.add_photo_alternate_outlined,
-            color: foodlyOrange,
+            color: orange,
             size: 42,
           ),
         ),
         const SizedBox(height: 12),
-        const Text(
+        Text(
           'Ajouter une photo du plat',
           style: TextStyle(
-            color: foodlyGreen,
+            color: widget.restaurant?.colors.first.toString().toColor(),
             fontSize: 15,
             fontWeight: FontWeight.bold,
           ),
@@ -328,15 +335,17 @@ class _RestaurantAddEditDishScreenState
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       appBar: AppBar(
-        backgroundColor: foodlyBackground,
+        backgroundColor: background,
         elevation: 0,
-        iconTheme: const IconThemeData(color: foodlyGreen),
+        iconTheme: IconThemeData(
+          color: widget.restaurant?.colors.first.toString().toColor(),
+        ),
         title: Text(
           _isEditing ? 'Modifier le plat' : 'Ajouter un plat',
-          style: const TextStyle(
-            color: foodlyGreen,
+          style: TextStyle(
+            color: widget.restaurant?.colors.first.toString().toColor(),
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -428,11 +437,11 @@ class _RestaurantAddEditDishScreenState
 
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              activeThumbColor: foodlyOrange,
-              title: const Text(
+              activeThumbColor: orange,
+              title: Text(
                 'Plat disponible',
                 style: TextStyle(
-                  color: foodlyGreen,
+                  color: widget.restaurant?.colors.first.toString().toColor(),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -450,8 +459,8 @@ class _RestaurantAddEditDishScreenState
               child: ElevatedButton(
                 onPressed: _isSaving ? null : _saveDish,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: foodlyOrange,
-                  disabledBackgroundColor: foodlyOrange.withValues(alpha: 0.5),
+                  backgroundColor: orange,
+                  disabledBackgroundColor: orange.withValues(alpha: 0.5),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -491,7 +500,10 @@ class _RestaurantAddEditDishScreenState
       padding: const EdgeInsets.only(bottom: 8),
       child: Text(
         text,
-        style: const TextStyle(color: foodlyGreen, fontWeight: FontWeight.w600),
+        style: TextStyle(
+          color: widget.restaurant?.colors.first.toString().toColor(),
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -512,7 +524,7 @@ class _RestaurantAddEditDishScreenState
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: foodlyOrange, width: 1.5),
+        borderSide: BorderSide(color: orange, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),

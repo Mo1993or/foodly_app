@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Auth/login_screen.dart';
 import 'package:foodly/Customer/customer_page.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/main.dart';
 
 class RoleSelectionScreen extends StatelessWidget {
@@ -22,14 +23,17 @@ class RoleSelectionScreen extends StatelessWidget {
                   width: 58,
                   height: 58,
                   decoration: BoxDecoration(
-                    color: FoodlyApp.orange,
+                    color: orange,
                     borderRadius: BorderRadius.circular(18),
+                    image: DecorationImage(
+                      image: AssetImage("assets/images/logo.png"),
+                    ),
                   ),
-                  child: const Icon(
-                    Icons.restaurant_menu_rounded,
-                    color: Colors.white,
-                    size: 32,
-                  ),
+                  // child: const Icon(
+                  //   Icons.restaurant_menu_rounded,
+                  //   color: Colors.white,
+                  //   size: 32,
+                  // ),
                 ),
                 const SizedBox(height: 30),
                 const Text(
@@ -37,7 +41,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w800,
-                    color: FoodlyApp.green,
+                    color: green,
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -55,10 +59,10 @@ class RoleSelectionScreen extends StatelessWidget {
                   title: 'Je suis client',
                   description:
                       'Découvrez les restaurants et commandez sans inscription.',
-                  color: FoodlyApp.orange,
+                  color: orange,
                   label: 'Continuer sans compte',
                   onTap: () {
-                    Navigator.of(context).pushReplacement(
+                    Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (_) => const CustomerHomeScreen(),
                       ),
@@ -70,7 +74,7 @@ class RoleSelectionScreen extends StatelessWidget {
                   icon: Icons.storefront_rounded,
                   title: 'Je suis restaurateur',
                   description: 'Gérez votre menu, vos commandes et vos ventes.',
-                  color: FoodlyApp.green,
+                  color: green,
                   label: 'Accéder à mon espace',
                   onTap: () {
                     Navigator.push(
@@ -153,7 +157,7 @@ class _RoleCard extends StatelessWidget {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
-                  color: FoodlyApp.green,
+                  color: green,
                 ),
               ),
               const SizedBox(height: 7),

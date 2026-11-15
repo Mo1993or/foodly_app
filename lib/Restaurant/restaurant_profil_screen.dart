@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Auth/login_screen.dart';
 import 'package:foodly/Customer/food_detail_screen.dart';
+import 'package:foodly/Restaurant/restaurant_dashbord_screen.dart';
 import 'package:foodly/Restaurant/restaurant_offer_screen.dart';
-import 'package:foodly/Restaurant/retaurant_data.dart'
-    hide foodlyGreen, foodlyBackground, foodlyOrange;
+import 'package:foodly/Restaurant/restaurant_profil_screen.dart' as FoodlyApp;
+import 'package:foodly/Restaurant/retaurant_data.dart';
+import 'package:foodly/Utils/network.dart';
+import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/restaurant_model.dart';
+import 'package:foodly/service/restaurant_service.dart';
 
 class RestaurantProfileScreen extends StatefulWidget {
   final RestaurantModel? restaurant;
@@ -18,11 +22,11 @@ class RestaurantProfileScreen extends StatefulWidget {
 class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  late final TextEditingController _nameController;
-  late final TextEditingController _addressController;
-  late final TextEditingController _phoneController;
-  late final TextEditingController _emailController;
-  late final TextEditingController _descriptionController;
+  TextEditingController _nameController = TextEditingController();
+  TextEditingController _addressController = TextEditingController();
+  TextEditingController _phoneController = TextEditingController();
+  TextEditingController _emailController = TextEditingController();
+  TextEditingController _descriptionController = TextEditingController();
 
   bool _isOpen = true;
 
@@ -53,7 +57,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
     super.dispose();
   }
 
-  void _saveProfile() {
+  Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
     restaurantData.updateRestaurant(
@@ -65,24 +69,57 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
       isOpen: _isOpen,
     );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Profil du restaurant mis à jour.'),
-        backgroundColor: foodlyGreen,
-      ),
-    );
+    try {
+      var data = {
+        "restaurantName": _nameController.text.trim(),
+        "description": _descriptionController.text.trim(),
+        "address": _addressController.text.trim(),
+        "phone": _phoneController.text.trim(),
+      };
+      await RestaurantService().updateRestaurant(
+        widget.restaurant?.id ?? "",
+        data,
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => RestaurantDashboardScreen(
+            selectedOffer: widget.restaurant?.activeOffer ?? "",
+            restaurant: widget.restaurant,
+            statusPayment: '',
+          ),
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Profil du restaurant mis à jour.'),
+          backgroundColor: widget.restaurant?.colors.first.toString().toColor(),
+        ),
+      );
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Une erreur s\'est produite'),
+
+          backgroundColor: widget.restaurant?.colors.first.toString().toColor(),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: foodlyBackground,
+      backgroundColor: background,
       appBar: AppBar(
         leading: Container(),
-        backgroundColor: foodlyBackground,
-        title: const Text(
+        backgroundColor: background,
+        title: Text(
           'Mon restaurant',
-          style: TextStyle(color: foodlyGreen, fontWeight: FontWeight.bold),
+          style: TextStyle(
+            color: widget.restaurant?.colors.first.toString().toColor(),
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Form(
@@ -93,7 +130,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
             Container(
               padding: const EdgeInsets.all(22),
               decoration: BoxDecoration(
-                color: foodlyGreen,
+                color: widget.restaurant?.colors.first.toString().toColor(),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
@@ -104,12 +141,17 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(24),
+                      image: DecorationImage(
+                        image: (widget.restaurant?.logoUrl != "")
+                            ? NetworkImage(widget.restaurant?.logoUrl ?? "")
+                            : AssetImage("assets/images/logo.png"),
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.restaurant,
-                      color: Colors.white,
-                      size: 42,
-                    ),
+                    // child: const Icon(
+                    //   Icons.restaurant,
+                    //   color: Colors.white,
+                    //   size: 42,
+                    // ),
                   ),
                   const SizedBox(height: 14),
                   Text(
@@ -130,7 +172,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                         : 'Fermé',
                     style: TextStyle(
                       color: widget.restaurant!.isOpen
-                          ? Colors.greenAccent
+                          ? widget.restaurant?.colors.first.toString().toColor()
                           : Colors.orangeAccent,
                     ),
                   ),
@@ -158,8 +200,13 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: foodlyGreen,
-                  side: const BorderSide(color: foodlyGreen, width: 1.5),
+                  foregroundColor: widget.restaurant?.colors.first
+                      .toString()
+                      .toColor(),
+                  side: BorderSide(
+                    color: widget.restaurant!.colors.first.toString().toColor(),
+                    width: 1.5,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -196,11 +243,11 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
               ),
             ),
             const SizedBox(height: 25),
-            const Text(
+            Text(
               'Informations générales',
               style: TextStyle(
                 fontSize: 19,
-                color: foodlyGreen,
+                color: widget.restaurant?.colors.first.toString().toColor(),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -258,10 +305,10 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
               ),
               child: SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text(
+                title: Text(
                   'Restaurant ouvert',
                   style: TextStyle(
-                    color: foodlyGreen,
+                    color: widget.restaurant?.colors.first.toString().toColor(),
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -271,9 +318,35 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                       : 'Les clients ne doivent pas commander.',
                 ),
                 value: _isOpen,
-                activeThumbColor: foodlyOrange,
-                onChanged: (value) {
+                activeThumbColor: orange,
+                onChanged: (value) async {
                   setState(() => _isOpen = value);
+                  try {
+                    await RestaurantService().updateOpenRestaurant(
+                      widget.restaurant?.id ?? "",
+                      _isOpen,
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: _isOpen
+                            ? Text('Le restaurant est maintenant ouvert')
+                            : Text('Le restaurant est maintenant fermé'),
+                        backgroundColor: widget.restaurant?.colors.first
+                            .toString()
+                            .toColor(),
+                      ),
+                    );
+                  } catch (error) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Une erreur s\'est produite'),
+
+                        backgroundColor: widget.restaurant?.colors.first
+                            .toString()
+                            .toColor(),
+                      ),
+                    );
+                  }
                 },
               ),
             ),
@@ -285,7 +358,9 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
                 icon: const Icon(Icons.save_outlined),
                 label: const Text('Enregistrer les modifications'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: foodlyOrange,
+                  backgroundColor: widget.restaurant?.colors.first
+                      .toString()
+                      .toColor(),
                   foregroundColor: Colors.white,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -326,7 +401,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
         onChanged: onChanged,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: foodlyOrange),
+          prefixIcon: Icon(icon, color: orange),
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
@@ -339,7 +414,7 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(15),
-            borderSide: const BorderSide(color: foodlyOrange),
+            borderSide: BorderSide(color: orange),
           ),
         ),
       ),
