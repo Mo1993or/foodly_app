@@ -80,15 +80,9 @@ class _RestaurantProfileScreenState extends State<RestaurantProfileScreen> {
         widget.restaurant?.id ?? "",
         data,
       );
-      Navigator.push(
+      Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => RestaurantDashboardScreen(
-            selectedOffer: widget.restaurant?.activeOffer ?? "",
-            restaurant: widget.restaurant,
-            statusPayment: '',
-          ),
-        ),
+        MaterialPageRoute(builder: (_) => RestaurantLoginScreen()),
       );
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
