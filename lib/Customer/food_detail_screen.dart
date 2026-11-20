@@ -1,5 +1,6 @@
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:foodly/Customer/food_detail_page.dart';
 import 'package:foodly/Restaurant/restaurant_add_edit_dish_screen.dart';
 import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/dishes_model.dart';
@@ -426,61 +427,74 @@ class _RestaurantDetailScreenState extends State<RestaurantDetailScreen> {
     final image = dish.imageUrl;
     final price = dish.price;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(17),
-      ),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: SizedBox(
-              height: 72,
-              width: 78,
-              child: image.isEmpty
-                  ? ColoredBox(
-                      color: Color(0xFFFFE9D9),
-                      child: Icon(Icons.restaurant, color: orange),
-                    )
-                  : Image.network(
-                      image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => ColoredBox(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => FoodDetailScreen(
+              dish: dish,
+              restaurantName: widget.restaurant.name,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(17),
+        ),
+        child: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: SizedBox(
+                height: 72,
+                width: 78,
+                child: image.isEmpty
+                    ? ColoredBox(
                         color: Color(0xFFFFE9D9),
                         child: Icon(Icons.restaurant, color: orange),
+                      )
+                    : Image.network(
+                        image,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => ColoredBox(
+                          color: Color(0xFFFFE9D9),
+                          child: Icon(Icons.restaurant, color: orange),
+                        ),
                       ),
+              ),
+            ),
+            const SizedBox(width: 13),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    dish.name.toString(),
+                    style: TextStyle(
+                      color: green,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
                     ),
-            ),
-          ),
-          const SizedBox(width: 13),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  dish.name.toString(),
-                  style: TextStyle(
-                    color: green,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
                   ),
-                ),
-                const SizedBox(height: 7),
-                Text(
-                  '$price FCFA',
-                  style: TextStyle(
-                    color: secondaryText,
-                    fontWeight: FontWeight.w800,
+                  const SizedBox(height: 7),
+                  Text(
+                    '$price FCFA',
+                    style: TextStyle(
+                      color: secondaryText,
+                      fontWeight: FontWeight.w800,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const Icon(Icons.chevron_right_rounded, color: Colors.black38),
-        ],
+            const Icon(Icons.chevron_right_rounded, color: Colors.black38),
+          ],
+        ),
       ),
     );
   }
@@ -607,69 +621,82 @@ class RestaurantMenuScreen extends StatelessWidget {
                       final dish = dishes[index];
                       final dishImage = dish.imageUrl.toString();
 
-                      return Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(14),
-                              child: SizedBox(
-                                height: 100,
-                                width: 105,
-                                child: dishImage.isEmpty
-                                    ? ColoredBox(
-                                        color: Color(0xFFFFE9D9),
-                                        child: Icon(
-                                          Icons.restaurant,
-                                          color: orange,
-                                          size: 35,
-                                        ),
-                                      )
-                                    : Image.network(
-                                        dishImage,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, __, ___) =>
-                                            ColoredBox(
-                                              color: Color(0xFFFFE9D9),
-                                              child: Icon(
-                                                Icons.restaurant,
-                                                color: orange,
-                                                size: 35,
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => FoodDetailScreen(
+                                dish: dish,
+                                restaurantName: restaurant.name,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(14),
+                                child: SizedBox(
+                                  height: 100,
+                                  width: 105,
+                                  child: dishImage.isEmpty
+                                      ? ColoredBox(
+                                          color: Color(0xFFFFE9D9),
+                                          child: Icon(
+                                            Icons.restaurant,
+                                            color: orange,
+                                            size: 35,
+                                          ),
+                                        )
+                                      : Image.network(
+                                          dishImage,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              ColoredBox(
+                                                color: Color(0xFFFFE9D9),
+                                                child: Icon(
+                                                  Icons.restaurant,
+                                                  color: orange,
+                                                  size: 35,
+                                                ),
                                               ),
-                                            ),
+                                        ),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      dish.name.toString(),
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w800,
+                                        color: green,
                                       ),
-                              ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    dish.name.toString(),
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                      color: green,
                                     ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    '${dish.price} FCFA',
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w800,
-                                      color: secondaryText,
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      '${dish.price} FCFA',
+                                      style: TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w800,
+                                        color: secondaryText,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       );
                     },

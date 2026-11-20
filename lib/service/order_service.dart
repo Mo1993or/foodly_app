@@ -29,7 +29,7 @@ class OrdersService {
 
     try {
       final response = await http.post(
-        Uri.parse('$apiUrl/orders/orders'),
+        Uri.parse('$apiUrl/orders'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(data),
       );

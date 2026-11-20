@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/services.dart';
@@ -10,6 +11,8 @@ import 'package:foodly/Utils/theme.dart';
 import 'package:foodly/model/dashboard_model.dart';
 import 'package:foodly/model/offer_model.dart';
 import 'package:foodly/model/restaurant_model.dart';
+import 'package:foodly/service/device_service.dart';
+import 'package:foodly/service/notification_service.dart';
 import 'package:foodly/service/restaurant_service.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -119,7 +122,7 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
 
     _fetchHistorySubscriptios();
     _fetchDashBoard();
-
+    _registerToken();
     debugPrint("restaurant ${widget.restaurant}");
   }
 
@@ -390,6 +393,24 @@ class _RestaurantDashboardScreenState extends State<RestaurantDashboardScreen> {
   // ============================================================
   // PAIEMENT
   // ============================================================
+  _registerToken() async {
+    final fcmToken = await NotificationService.instance.getToken();
+    final deviceId = await DeviceInfoService.getDeviceId();
+
+    if (fcmToken != null) {
+      var data = {
+        "token": fcmToken,
+        "platform": defaultTargetPlatform == TargetPlatform.iOS
+            ? 'ios'
+            : 'android',
+        "deviceId": deviceId,
+      };
+      await RestaurantService().registerToken(data);
+      NotificationService.instance.listenTokenRefresh((newToken) async {
+        await RestaurantService().registerToken(newToken);
+      });
+    }
+  }
 
   Future<void> _launchPayment() async {
     final url = apiUrlPayment;

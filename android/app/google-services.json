@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "658861058744",
+    "project_id": "thiop-3a377",
+    "storage_bucket": "thiop-3a377.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:658861058744:android:329a0f863b3123a4b9224d",
+        "android_client_info": {
+          "package_name": "com.teamx.thiop"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCwMMqnwDXbqcqdkr3t1tHODrJ4KABCVsA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

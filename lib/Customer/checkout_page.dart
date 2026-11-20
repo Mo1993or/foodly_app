@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:foodly/Customer/customer_order_store.dart';
+import 'package:foodly/Customer/customer_page.dart';
 import 'package:foodly/Customer/customer_profil_store.dart';
 import 'package:foodly/Customer/panier_page.dart';
 import 'package:foodly/Restaurant/restaurant_add_edit_dish_screen.dart';
 import 'package:foodly/Utils/theme.dart';
+import 'package:foodly/service/notification_service.dart';
 import 'package:foodly/service/order_service.dart';
 
 class CheckoutScreen extends StatefulWidget {
@@ -128,6 +130,9 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     }
     print("itemList $itemList");
     try {
+      final fcmToken = await NotificationService.instance.getToken();
+      print("fcmToken $fcmToken");
+
       print("restaurant id ${orderMap['items'][0]['restaurantId'] as String}");
       var data = {
         "customer": {
@@ -135,6 +140,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           "phone": orderMap['phone'] as String,
           "address": orderMap['address'] as String,
         },
+        "customerFcmToken": fcmToken,
         "items": itemList,
         "note": orderMap['notes'] as String? ?? '',
       };
@@ -401,7 +407,10 @@ class OrderConfirmationScreen extends StatelessWidget {
                   height: 52,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.of(context).popUntil((route) => route.isFirst);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => CustomerHomeScreen()),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: orange,

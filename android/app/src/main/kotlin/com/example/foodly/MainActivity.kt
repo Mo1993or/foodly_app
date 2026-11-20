@@ -1,4 +1,4 @@
-package com.example.foodly
+package com.teamx.thiop
 
 import io.flutter.embedding.android.FlutterActivity
 

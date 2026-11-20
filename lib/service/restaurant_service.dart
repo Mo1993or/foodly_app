@@ -275,4 +275,29 @@ class RestaurantService {
       throw Exception('$e');
     }
   }
+
+  dynamic registerToken(var data) async {
+    await _readToken();
+    print("data sub ${json.encode(data)}");
+
+    try {
+      final response = await http.post(
+        Uri.parse('$apiUrl/notifications/register-token'),
+        headers: await _headersAuth(token),
+        body: json.encode(data),
+      );
+      print('response.body dd : ${response.body}');
+      final Map<String, dynamic> responseData = json.decode(response.body);
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        print("object sub token fcm  ${responseData}");
+        return responseData;
+      } else {
+        final errorMessage = responseData['message'];
+        throw Exception('$errorMessage');
+      }
+    } catch (e) {
+      throw Exception('$e');
+    }
+  }
 }
